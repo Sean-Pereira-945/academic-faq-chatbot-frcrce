@@ -1,0 +1,4 @@
+# Add your university URLs here, one per line
+# Example:
+# https://university.edu/faq
+# https://university.edu/academic-calendar

@@ -1,0 +1,65 @@
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Python bytecode and cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Python packaging/build artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+*.spec
+pip-wheel-metadata/
+
+# Virtual environments
+.venv/
+.venv*/
+venv/
+env/
+*/chatbot_env/
+chatbot_env/
+
+# Testing and coverage
+.pytest_cache/
+.coverage*
+htmlcov/
+.cache/
+pytestdebug.log
+
+# Logs and temp files
+*.log
+logs/
+*.tmp
+tmp/
+temp/
+
+# IDE/editor settings
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+
+# Jupyter notebooks
+.ipynb_checkpoints/
+
+# Environment/configuration files
+.env
+.env.*
+*.env
+*.env.*
+.envrc
+*.envrc
+*.encv
+
+# Data/model artifacts
+models/
+*/models/
+
+# Miscellaneous
+/dist/
+.dist/

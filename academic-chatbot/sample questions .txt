@@ -1,0 +1,352 @@
+﻿Of course. Here are 50 detailed questions and answers generated from the provided documents. Each piece of information is cited to ensure accuracy and traceability.
+
+
+Part 1: Examinations, Grading, and Academic Rules
+
+
+1. What is the minimum percentage required to pass an undergraduate course?
+A student must obtain a minimum of
+40% in the total marks for a course to pass1. The total marks are a sum of all components (ISE1, MSE, ISE2, ESE), and there is no separate passing requirement for any individual component2222.
+
+
+________________
+2. Can I get a grade higher than 'P' (Pass) if I skip the MSE but score very high on the ESE?
+No. To get a grade of
+'D' or higher in any course, it is mandatory for a student to have appeared in both the Mid-Semester Examination (MSE) and the End-Semester Examination (ESE)333.
+
+
+________________
+3. How is the CGPA converted to a percentage?
+The conversion is done using the following formula:
+Percentage = (CGPA - 0.75) x 104.
+
+
+________________
+4. What is a Special Examination and who is eligible for it?
+A Special Examination is conducted after the ESE results are declared5. Students are eligible if they:
+* Were detained due to attendance between 50-75%6.
+
+* Were unable to appear for an exam due to valid medical reasons7.
+
+* Were declared "failed" in the recently conducted ESE8.
+
+* Wish to reappear for a "Grade Improvement"9.
+
+
+Note: All students who appear for a special examination will receive a penalty of one grade10101010.
+
+________________
+5. What is a Re-examination and when is it conducted?
+A Re-examination is for students who have failed both the ESE and/or the Special examination11. It is also the only option for students involved in malpractice or those with attendance below 50%12.
+   * The ODD semester re-examination is held in the first and second week of
+July13.
+
+   * The EVEN semester re-examination is held in the first and second week of
+January14.
+
+________________
+6. What is the maximum grade I can get in a Re-examination?
+For re-examinations, there is an upper
+cap of a 'B' grade15. For example, even if you score 85% or more, the highest grade you can receive is 'B'16.
+
+
+________________
+7. How many credits are required for promotion from the second year to the third year?
+For promotion to the Third Year, a student must have completed at least
+50% of the credits in the second year and must have obtained 70% of the credits from the first year17.
+
+
+________________
+8. What is the procedure for seeing our evaluated answer sheets?
+The college arranges an
+'open house' session where students can see their answer sheets18. During this session, students review their papers and must sign them to certify that they have "SEEN" them19.
+
+
+________________
+9. Can I see my answer sheet after a Special Exam or Re-exam?
+No. There will
+not be an Open house and Grievance process for Special exams and Re-exams under any condition20.
+
+
+________________
+10. How many credits do I need to earn to be awarded a B.Tech. degree?
+A student is required to earn a total of 165 credits and have a CGPA of not less than 4.00 to be eligible for the award of a B.Tech. Degree21.
+
+
+Part 2: Attendance, Fees, and Penalties
+
+
+11. What is the mandatory attendance requirement?
+A student must attend a minimum of
+75% of the classes (lectures, tutorials, and practicals) for each course separately22.
+
+
+________________
+12. My attendance in a course is 60%. What are the consequences?
+If your attendance is between 50% and 75%, you will be declared a defaulter and will not be allowed to write the regular MSE and/or ESE23. You must appear for the
+Special examination, which requires a payment of Rs. 5,000
+per course24242424.
+
+
+________________
+13. What happens if my attendance is 48% in a course?
+If your attendance is less than 50%, you are detained2525. You must appear for the
+Re-examination after one year, which requires a payment of Rs. 8,000
+per course26262626.
+
+
+________________
+14. I missed the ESE due to a medical emergency. What is the fee to reappear?
+If you miss an exam due to a documented medical reason or personal emergency, you can appear for the Special Examination by paying a fee of Rs. 1,000
+per course27.
+
+
+________________
+15. What is the punishment for being caught with written notes on a calculator during an exam?
+Possession of any incriminating material (written or printed) during an exam is considered malpractice2828. The punishment is an
+'F' Grade in that subject, and you will only be allowed to appear for the Re-examination after one semester2929.
+
+
+________________
+16. Is there a late fee for submitting the re-examination form?
+Yes. If you pay the fees after the initial 7-day period and up to the 15th day, you must pay a late fee of Rs. 1,000
+per subject30. If you pay after the 15th day until the exam date, the late fee increases to
+
+
+Rs. 3,000
+per subject31.
+
+
+________________
+17. What is the fee for improving my grade in a course?
+The fee to appear for a special examination for the purpose of grade improvement is Rs. 1,000
+per course32.
+
+
+
+
+Part 3: Curriculum Changes (for AY 2025-26)
+
+
+18. Are Liberal Learning Courses (LLC) available for first and second-year students from AY 2025-26?
+No. All Liberal Learning Courses (LLC) have been
+removed from the First and Second-Year engineering curriculum, effective from the Academic Year 2025-2633.
+
+
+________________
+19. What happened to the credits from the removed LLC courses?
+The credits that were previously allocated to LLC courses will be
+redistributed and readjusted within the core engineering courses34.
+
+
+________________
+20. Is the 'Introduction to Emerging Technologies (IET)' course still part of the first-year curriculum?
+No. The 'Introduction to Emerging Technologies (IET)' course has been removed from the First Year (FE) curriculum with effect from A.Y. 2025-2635.
+________________
+21. For the CSE branch, which specific courses are being revised to incorporate the LLC credits?
+For the Computer Science and Engineering (CSE) branch, the credits are being redistributed to
+SEM:III-Data Structures and SEM:IV-Web Programming36.
+
+
+
+
+Part 4: Student Council, Activities, and Events
+
+
+22. What are the eligibility criteria to become a member of the student council?
+A student must have:
+      * A
+CGPA of 6.50 till the previous semester37.
+
+      * No KTs38.
+
+      * No record of being caught for
+malpractices during an exam39.
+
+      * Not be an
+attendance defaulter40.
+
+________________
+23. How many clubs or committees can I join?
+A student can be a member of a maximum of
+one council/committee and two clubs41.
+
+
+________________
+24. When is the new student council officially announced?
+The formal announcement of new council members is done during the
+annual day event in April42.
+
+
+________________
+25. What is "Prakalp"?
+Prakalp is a flagship
+technical event of the college held for one day during the EVEN semester43.
+
+
+________________
+26. When is the CRMD event scheduled for 2025?
+The CRMD cultural event is scheduled for
+August 22nd and 23rd, 202544.
+
+
+________________
+27. What are some key "Don'ts" for student council members?
+Members should not:
+         * Abuse their power for personal gain45.
+
+         * Disregard the diversity of the student community46.
+
+         * Ignore constructive feedback47.
+
+         * Overcommit to more responsibilities than they can handle48.
+
+________________
+28. Who is part of the Executive Council that directs all student activities?
+The Executive Council comprises the Principal, Dean, HODs, Faculty In-charge of all societies, the President, the General Secretary, and student secretaries49.
+
+
+Part 5: Internships
+
+
+29. What is the main purpose of an internship?
+An internship is a structured, short-term work experience designed for students to gain
+practical exposure in a professional setting and apply classroom learning in real-world scenarios50505050.
+
+
+________________
+30. How many hours of work are generally required to earn one internship credit?
+It is generally equivalent to
+30 hours of work per credit51.
+
+
+________________
+31. What should I do if I find an internship opportunity through my own efforts?
+You are free to find your own internship, but you
+must inform the Nodal Officer/TPO and ensure that the opportunity complies with the college's internship guidelines52.
+
+
+________________
+32. Who should I contact for any questions or clarifications regarding the internship process?
+For any queries, students can reach out to the designated
+Nodal Officer/TPO or the Faculty Coordinators at the departmental level53.
+
+
+________________
+33. How is my performance during an internship evaluated?
+Your performance is assessed based on several factors, including the quality of your presentation, depth of knowledge, demonstrated skills, your internship report, attendance record, student log, and the evaluation provided by your industry supervisor54.
+________________
+34. Is it necessary to include a cover letter with my resume when applying for an internship?
+A cover letter is
+recommended to showcase your interest, qualifications, and suitability for the internship role55.
+
+
+
+
+Part 6: Revised ESE Pattern (from AY 2025-26)
+
+
+35. What is the duration and mark allocation for the revised ESE pattern?
+The revised End Semester Examination (ESE) will be of
+90 minutes duration with a 30 marks question paper56.
+
+
+________________
+36. What portion of the syllabus will the revised ESE cover?
+The question paper for the revised ESE will be based on the
+remaining syllabus after the MSE57.
+
+
+________________
+37. From which academic year is the new ESE pattern effective?
+This change will be applicable from the
+Academic Year 2025-2658585858.
+
+
+
+
+Part 7: Academic Calendar and Specific Dates
+
+
+38. What are the dates for the Crescendo technical fest in 2025?
+Crescendo, including its hackathon, is scheduled from
+October 16th to 19th, 202559.
+
+
+________________
+39. When is the Sports Day scheduled for 2026?
+Sports Day is scheduled for
+January 10th, 202660.
+
+
+________________
+40. When does the vacation period begin for SE and TE students after the ODD semester in 2025?
+The vacation for SE and TE students begins on
+December 11th, 202561.
+
+
+________________
+41. When will the Prakalp technical event take place in 2026?
+Prakalp is scheduled for
+April 18th, 202662.
+
+
+
+
+Part 8: Advanced/Scenario-Based Questions
+
+
+42. I am a third-year student with 45% attendance in one course due to a serious illness. What is the exam procedure for me and what fees do I have to pay?
+With attendance below 50%, you are detained63. Even with a documented medical reason, the Re-examination is compulsory, and the fee is
+Rs. 2,000 per course. You will also be required to attend all remedial lectures64.
+
+
+________________
+43. I am a Final Year student in October 2025. I need to know the dates for my first MSE and the subsequent ESE.
+According to the calendar, your Mid-Semester Examination (MSE) begins on
+October 5, 202565. Your End-Semester Examinations (ESE) are scheduled to begin on
+
+
+November 25, 202566.
+
+
+________________
+44. As a new SE student in AY 2025-26, which of my courses will have a revised structure, and what is the new ESE pattern I will face?
+As a Second Year (SE) student, your core engineering courses will have a revised credit structure to absorb credits from the discontinued LLC courses67. The specific courses depend on your branch68. You will face the new ESE pattern, which is a
+90-minute, 30-mark exam covering the syllabus after your MSE69.
+
+
+________________
+45. If I want to improve my 'C' grade from the ODD semester, when can I reappear for the exam and what is the fee?
+You can appear for the
+Special Examination to improve your grade70. The ODD semester Special Examination is held in the first and second week of
+
+
+January71. The fee for grade improvement is
+
+
+Rs. 1,000
+per course72.
+
+
+________________
+46. My friend was caught for impersonation in an exam. What is the punishment?
+The case will be handed over to the police7373. The bonafide student for whom the impersonation was done will have all their exams for the semester cancelled and will be
+debarred from continuing their studies and writing all exams for two years74747474.
+
+
+________________
+47. What is the process if a student is suspected of using unfair means during an exam?
+The invigilator will ask the student to surrender the material and the answer book75757575. A statement will be taken from the student, and they will be issued a fresh answer book to continue the exam76. The case is then reported to the Complaint Redressal Committee (CRC) for a final decision77.
+________________
+48. How are MOOC/NPTEL courses graded?
+The college converts the percentage from the NPTEL certificate into a letter grade. For example, a score of 86% and above is an 'O' grade, 71% to 85% is an 'A' grade, and the passing range of 40% to 45% is a 'P' grade78.
+________________
+49. I am an ECS student in my second year (AY 2025-26). Will I have a class for "Object Oriented Programming with JAVA"?
+Yes. According to the curriculum revision document, "SEM:III- Object Oriented Programming with JAVA" is a core course for the ECS branch, and its credit structure has been revised for the academic year 2025-2679.
+________________
+50. When does the college plan to hold the Euphoria and Marathon events in 2026?
+            * Euphoria is scheduled for January 22nd, 23rd, and 24th, 2026 (Thursday-Saturday), with an alternate possibility of January 23rd, 24th, and 25th/26th (Friday-Sunday/Monday)80.
+
+            * The
+Marathon is scheduled for February 15th, 2026 (Sunday)81.
