@@ -20,14 +20,21 @@ else:
     # In development, allow all origins
     CORS(app)
 
-# Initialize chatbot
+# Initialize chatbot with error handling
 print("🔄 Initializing chatbot in Flask app...")
-chatbot = AcademicFAQChatbot()
-print(f"📊 Chatbot initialized. Is trained: {chatbot.is_trained}")
-if chatbot.is_trained:
-    print(f"✅ Chatbot ready with {len(chatbot.search_engine.documents)} documents")
-else:
-    print("⚠️  Chatbot not trained - knowledge base not found!")
+try:
+    chatbot = AcademicFAQChatbot()
+    print(f"📊 Chatbot initialized. Is trained: {chatbot.is_trained}")
+    if chatbot.is_trained:
+        print(f"✅ Chatbot ready with {len(chatbot.search_engine.documents)} documents")
+    else:
+        print("⚠️  Chatbot not trained - knowledge base not found!")
+except Exception as e:
+    print(f"❌ Error initializing chatbot: {e}")
+    import traceback
+    traceback.print_exc()
+    # Create a dummy chatbot that will return errors
+    chatbot = None
 
 
 @app.route('/')
@@ -53,6 +60,11 @@ def chat():
             return jsonify({
                 'error': 'Please provide a question'
             }), 400
+        
+        if chatbot is None:
+            return jsonify({
+                'error': 'Chatbot initialization failed. Please check server logs.'
+            }), 500
         
         if not chatbot.is_trained:
             return jsonify({
@@ -89,6 +101,20 @@ def status():
     import os
     faiss_exists = os.path.exists("models/academic_faq.faiss")
     pkl_exists = os.path.exists("models/academic_faq_data.pkl")
+    
+    if chatbot is None:
+        return jsonify({
+            'is_trained': False,
+            'stats': 'Chatbot initialization failed',
+            'embedding_backend': 'N/A',
+            'error': 'Chatbot failed to initialize. Check logs for details.',
+            'debug_info': {
+                'faiss_file_exists': faiss_exists,
+                'pkl_file_exists': pkl_exists,
+                'working_directory': os.getcwd(),
+                'documents_count': 0
+            }
+        }), 500
     
     return jsonify({
         'is_trained': chatbot.is_trained,
