@@ -1,0 +1,29 @@
+# Core ML/NLP Dependencies
+sentence-transformers==2.2.2
+faiss-cpu==1.11.0
+pandas==2.3.3
+numpy==2.3.3
+huggingface-hub==0.35.3
+
+# PDF Processing
+pypdf2==3.0.1
+pdfplumber==0.10.3
+
+# Web Scraping
+beautifulsoup4==4.12.2
+requests==2.31.0
+
+# AI Generation
+google-generativeai==0.8.3
+
+# Web Framework
+flask==3.0.0
+flask-cors==4.0.0
+Werkzeug==3.0.1
+
+# Production Server
+gunicorn==21.2.0
+gevent==24.2.1
+
+# Environment Management
+python-dotenv==1.0.0

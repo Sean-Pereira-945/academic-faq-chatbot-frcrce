@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat - Academic FAQ Chatbot</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/chat.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="noise-overlay"></div>
+    
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="logo">
+                <span class="logo-icon">🎓</span>
+                <span class="logo-text">AcademicAI</span>
+            </a>
+            <div class="nav-right">
+                <div class="status-indicator">
+                    <span class="status-dot"></span>
+                    <span class="status-text">Online</span>
+                </div>
+                <a href="/" class="back-button">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Back to Home
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Chat Container -->
+    <div class="chat-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>Chat Sessions</h2>
+                <button class="new-chat-btn" id="newChatBtn">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M10 5V15M5 10H15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    New Chat
+                </button>
+            </div>
+            <div class="chat-history" id="chatHistory">
+                <div class="history-item active">
+                    <div class="history-icon">💬</div>
+                    <div class="history-content">
+                        <div class="history-title">Current Session</div>
+                        <div class="history-preview">Start a conversation...</div>
+                    </div>
+                </div>
+            </div>
+            <div class="sidebar-footer">
+                <div class="info-card">
+                    <div class="info-icon">ℹ️</div>
+                    <div class="info-text">
+                        <strong>Quick Tips</strong>
+                        <p>Ask about academic policies, deadlines, registration, or library hours.</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Chat Area -->
+        <main class="chat-main">
+            <div class="chat-messages" id="chatMessages">
+                <!-- Welcome Message -->
+                <div class="message-wrapper assistant-wrapper">
+                    <div class="message assistant-message">
+                        <div class="message-avatar">
+                            <span>🤖</span>
+                        </div>
+                        <div class="message-content">
+                            <div class="message-header">
+                                <span class="message-sender">AcademicAI Assistant</span>
+                                <span class="message-time"></span>
+                            </div>
+                            <div class="message-text">
+                                <p>Hello! I'm your Academic FAQ Assistant. I can help you with questions about academic policies, deadlines, course registration, and university procedures.</p>
+                                <p>What would you like to know?</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Suggested Questions -->
+                <div class="suggestions">
+                    <div class="suggestions-title">Try asking:</div>
+                    <div class="suggestions-grid">
+                        <button class="suggestion-chip">What are the library hours?</button>
+                        <button class="suggestion-chip">When is the registration deadline?</button>
+                        <button class="suggestion-chip">How do I drop a course?</button>
+                        <button class="suggestion-chip">What is the refund policy?</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Typing Indicator -->
+            <div class="typing-indicator" id="typingIndicator" style="display: none;">
+                <div class="message-avatar">
+                    <span>🤖</span>
+                </div>
+                <div class="typing-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="input-container">
+                <div class="input-wrapper">
+                    <textarea 
+                        id="messageInput" 
+                        class="message-input" 
+                        placeholder="Ask your academic question here..."
+                        rows="1"
+                    ></textarea>
+                    <button class="send-button" id="sendButton" disabled>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 8L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="input-footer">
+                    <span class="input-hint">Press Enter to send, Shift + Enter for new line</span>
+                    <span class="char-count"><span id="charCount">0</span>/1000</span>
+                </div>
+            </div>
+        </main>
+
+        <!-- Info Panel -->
+        <aside class="info-panel">
+            <div class="panel-section">
+                <h3 class="panel-title">System Status</h3>
+                <div class="status-grid">
+                    <div class="status-item">
+                        <span class="status-label">Knowledge Base</span>
+                        <span class="status-value" id="kbStatus">Loading...</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Model</span>
+                        <span class="status-value" id="modelStatus">Loading...</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Avg Response</span>
+                        <span class="status-value" id="avgResponse">~2s</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel-section">
+                <h3 class="panel-title">Categories</h3>
+                <div class="category-list">
+                    <div class="category-item">
+                        <span class="category-icon">📚</span>
+                        <span>Academic Policies</span>
+                    </div>
+                    <div class="category-item">
+                        <span class="category-icon">📅</span>
+                        <span>Important Dates</span>
+                    </div>
+                    <div class="category-item">
+                        <span class="category-icon">📝</span>
+                        <span>Registration</span>
+                    </div>
+                    <div class="category-item">
+                        <span class="category-icon">💰</span>
+                        <span>Financial Aid</span>
+                    </div>
+                    <div class="category-item">
+                        <span class="category-icon">🏫</span>
+                        <span>Campus Services</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel-section">
+                <h3 class="panel-title">Quick Actions</h3>
+                <button class="action-button" id="clearChat">
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                        <path d="M3 4.5H15M6 4.5V3C6 2.45 6.45 2 7 2H11C11.55 2 12 2.45 12 3V4.5M14.5 4.5L13.5 15.5C13.5 16.05 13.05 16.5 12.5 16.5H5.5C4.95 16.5 4.5 16.05 4.5 15.5L3.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Clear Chat
+                </button>
+                <button class="action-button" id="exportChat">
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                        <path d="M15.5 11.5V14.5C15.5 15.05 15.05 15.5 14.5 15.5H3.5C2.95 15.5 2.5 15.05 2.5 14.5V11.5M9 2.5V11.5M9 11.5L12 8.5M9 11.5L6 8.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Export Chat
+                </button>
+            </div>
+        </aside>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+</body>
+</html>

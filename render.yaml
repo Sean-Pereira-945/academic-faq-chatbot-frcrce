@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: academic-faq-chatbot
+    runtime: python
+    region: oregon
+    plan: free
+    branch: main
+    rootDir: academic-chatbot
+    buildCommand: chmod +x build.sh && ./build.sh
+    startCommand: gunicorn --worker-class gevent --workers 1 --bind 0.0.0.0:$PORT --timeout 120 --preload wsgi:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: GEMINI_API_KEY
+        sync: false  # Must be set manually in Render dashboard
+    healthCheckPath: /health
+    autoDeploy: true

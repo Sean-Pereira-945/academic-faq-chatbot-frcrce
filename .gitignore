@@ -1,0 +1,50 @@
+# Virtual Environment
+chatbot_env/
+venv/
+env/
+
+# Python Cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+
+# IDE Files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Model Files (large files)
+models/*.bin
+# NOTE: Keep knowledge base files for deployment
+# models/*.pkl
+# *.faiss
+
+# Data Files (potentially large)
+# NOTE: Keep PDFs for production rebuild if needed
+# data/pdfs/*.pdf
+data/web_pages/*.html
+
+# Environment Variables
+.env
+.env.*
+.envrc
+*.env
+*.envrc
+*.encv
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temporary Files
+temp/
+tmp/

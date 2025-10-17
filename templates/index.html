@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Academic FAQ Chatbot - AI-Powered Academic Assistant</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="noise-overlay"></div>
+    
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <span class="logo-icon">🎓</span>
+                <span class="logo-text">AcademicAI</span>
+            </div>
+            <div class="nav-links">
+                <a href="#features" class="nav-link">Features</a>
+                <a href="#about" class="nav-link">About</a>
+                <a href="#tech" class="nav-link">Technology</a>
+                <a href="/chat" class="cta-button">Launch Chat</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-container">
+            <div class="hero-content">
+                <h1 class="hero-title">
+                    <span class="gradient-text">AI-Powered</span><br>
+                    Academic Assistant
+                </h1>
+                <p class="hero-subtitle">
+                    Instantly get answers to academic policies, deadlines, and procedures with our intelligent chatbot powered by Google Gemini and advanced semantic search.
+                </p>
+                <div class="hero-buttons">
+                    <a href="/chat" class="primary-button">
+                        <span>Start Chatting</span>
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </a>
+                    <a href="#about" class="secondary-button">Learn More</a>
+                </div>
+                <div class="hero-stats">
+                    <div class="stat-item">
+                        <span class="stat-number" id="stat-queries">1000+</span>
+                        <span class="stat-label">Queries Answered</span>
+                    </div>
+                    <div class="stat-divider"></div>
+                    <div class="stat-item">
+                        <span class="stat-number" id="stat-accuracy">95%</span>
+                        <span class="stat-label">Accuracy Rate</span>
+                    </div>
+                    <div class="stat-divider"></div>
+                    <div class="stat-item">
+                        <span class="stat-number" id="stat-response">&lt;2s</span>
+                        <span class="stat-label">Response Time</span>
+                    </div>
+                </div>
+            </div>
+            <div class="hero-visual">
+                <div class="floating-card card-1">
+                    <div class="card-icon">📚</div>
+                    <div class="card-content">
+                        <div class="card-title">Library Hours</div>
+                        <div class="card-text">Mon-Fri: 8AM - 10PM</div>
+                    </div>
+                </div>
+                <div class="floating-card card-2">
+                    <div class="card-icon">📅</div>
+                    <div class="card-content">
+                        <div class="card-title">Academic Calendar</div>
+                        <div class="card-text">Fall 2025 Semester</div>
+                    </div>
+                </div>
+                <div class="floating-card card-3">
+                    <div class="card-icon">✓</div>
+                    <div class="card-content">
+                        <div class="card-title">Registration Open</div>
+                        <div class="card-text">Now accepting applications</div>
+                    </div>
+                </div>
+                <div class="orb orb-1"></div>
+                <div class="orb orb-2"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <div class="section-container">
+            <div class="section-header">
+                <h2 class="section-title">Powerful Features</h2>
+                <p class="section-subtitle">Everything you need for instant academic assistance</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🤖</div>
+                    <h3 class="feature-title">AI-Powered Responses</h3>
+                    <p class="feature-description">Leverages Google Gemini for natural, context-aware answers to your academic questions.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3 class="feature-title">Lightning Fast</h3>
+                    <p class="feature-description">Get instant answers with advanced FAISS semantic search across all academic documents.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📖</div>
+                    <h3 class="feature-title">Comprehensive Knowledge</h3>
+                    <p class="feature-description">Trained on complete academic handbooks, policies, and institutional guidelines.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎯</div>
+                    <h3 class="feature-title">Accurate Citations</h3>
+                    <p class="feature-description">Every answer includes source references to official academic documents.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔒</div>
+                    <h3 class="feature-title">Secure & Private</h3>
+                    <p class="feature-description">Your queries are processed securely with no data retention.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🌐</div>
+                    <h3 class="feature-title">24/7 Availability</h3>
+                    <p class="feature-description">Access academic information anytime, anywhere, without waiting.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="about">
+        <div class="section-container">
+            <div class="about-content">
+                <div class="about-text">
+                    <h2 class="section-title">About This Project</h2>
+                    <p class="about-description">
+                        The Academic FAQ Chatbot is an advanced AI-powered assistant designed to help students, faculty, and staff quickly find answers to academic questions. Built with cutting-edge natural language processing and semantic search technology, it provides instant, accurate responses with proper citations.
+                    </p>
+                    <p class="about-description">
+                        This project combines Google Gemini's powerful language model with FAISS vector search to understand context and retrieve the most relevant information from academic handbooks, policies, and guidelines.
+                    </p>
+                    <div class="about-highlights">
+                        <div class="highlight-item">
+                            <span class="highlight-icon">✓</span>
+                            <span>Natural language understanding</span>
+                        </div>
+                        <div class="highlight-item">
+                            <span class="highlight-icon">✓</span>
+                            <span>Context-aware responses</span>
+                        </div>
+                        <div class="highlight-item">
+                            <span class="highlight-icon">✓</span>
+                            <span>Source attribution</span>
+                        </div>
+                        <div class="highlight-item">
+                            <span class="highlight-icon">✓</span>
+                            <span>Continuous learning</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="about-visual">
+                    <div class="tech-stack">
+                        <div class="tech-item">
+                            <div class="tech-logo">🧠</div>
+                            <span>Google Gemini</span>
+                        </div>
+                        <div class="tech-item">
+                            <div class="tech-logo">🔍</div>
+                            <span>FAISS Search</span>
+                        </div>
+                        <div class="tech-item">
+                            <div class="tech-logo">🐍</div>
+                            <span>Python</span>
+                        </div>
+                        <div class="tech-item">
+                            <div class="tech-logo">⚙️</div>
+                            <span>Flask API</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Technology Section -->
+    <section id="tech" class="technology">
+        <div class="section-container">
+            <div class="section-header">
+                <h2 class="section-title">Built with Modern Technology</h2>
+                <p class="section-subtitle">Powered by industry-leading AI and search technologies</p>
+            </div>
+            <div class="tech-grid">
+                <div class="tech-card">
+                    <h3>Google Gemini AI</h3>
+                    <p>Advanced language model for natural, human-like responses</p>
+                </div>
+                <div class="tech-card">
+                    <h3>FAISS Vector Search</h3>
+                    <p>Lightning-fast semantic search across millions of embeddings</p>
+                </div>
+                <div class="tech-card">
+                    <h3>Sentence Transformers</h3>
+                    <p>State-of-the-art text embeddings for accurate retrieval</p>
+                </div>
+                <div class="tech-card">
+                    <h3>Flask Backend</h3>
+                    <p>Robust Python web framework for reliable API services</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="cta-container">
+            <h2 class="cta-title">Ready to get answers?</h2>
+            <p class="cta-text">Start chatting with our AI assistant and discover how easy academic information can be.</p>
+            <a href="/chat" class="cta-button-large">
+                <span>Launch Chatbot</span>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <span class="logo-icon">🎓</span>
+                    <span class="logo-text">AcademicAI</span>
+                </div>
+                <p class="footer-text">AI-Powered Academic Assistant</p>
+            </div>
+            <div class="footer-links">
+                <a href="#features">Features</a>
+                <a href="#about">About</a>
+                <a href="#tech">Technology</a>
+                <a href="/chat">Chat</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 Academic FAQ Chatbot. Built with ❤️ for students.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="{{ url_for('static', filename='js/landing.js') }}"></script>
+</body>
+</html>

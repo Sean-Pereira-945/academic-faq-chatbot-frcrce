@@ -1,0 +1,16 @@
+DATA SOURCES FOR ACADEMIC FAQ CHATBOT
+=====================================
+
+PDF DOCUMENTS:
+- student_handbook.pdf (Place in data/pdfs/)
+- academic_policies.pdf (Place in data/pdfs/)
+
+WEB SOURCES:
+- Academic Calendar: [Add your university's academic calendar URL]
+- FAQ Page: [Add your university's FAQ page URL]
+- Admissions Info: [Add relevant admissions page URL]
+
+NOTES:
+- Start with 3-5 documents maximum for Phase 1
+- Focus on official university sources
+- Ensure documents are publicly accessible
