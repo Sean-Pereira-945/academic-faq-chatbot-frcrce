@@ -23,7 +23,6 @@ Werkzeug==3.0.1
 
 # Production Server
 gunicorn==21.2.0
-gevent==24.2.1
 
 # Environment Management
 python-dotenv==1.0.0
