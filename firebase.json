@@ -1,0 +1,44 @@
+{
+  "hosting": {
+    "public": "public",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "/api/**",
+        "run": {
+          "serviceId": "academic-chatbot",
+          "region": "us-central1"
+        }
+      },
+      {
+        "source": "/health",
+        "run": {
+          "serviceId": "academic-chatbot",
+          "region": "us-central1"
+        }
+      },
+      {
+        "source": "/**",
+        "run": {
+          "serviceId": "academic-chatbot",
+          "region": "us-central1"
+        }
+      }
+    ],
+    "headers": [
+      {
+        "source": "**/*.@(jpg|jpeg|gif|png|svg|webp|js|css)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "max-age=7200"
+          }
+        ]
+      }
+    ]
+  }
+}
