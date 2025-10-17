@@ -37,6 +37,8 @@ data/web_pages/*.html
 *.env
 *.envrc
 *.encv
+.env.yaml
+.env.yml
 
 # OS Files
 .DS_Store
