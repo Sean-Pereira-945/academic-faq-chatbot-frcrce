@@ -1,6 +1,6 @@
 # Core ML/NLP Dependencies
 sentence-transformers==2.2.2
-faiss-cpu==1.9.0.post1
+faiss-cpu==1.8.0
 pandas==2.0.3
 numpy==1.24.3
 huggingface-hub==0.16.4
@@ -26,3 +26,7 @@ gunicorn==21.2.0
 
 # Environment Management
 python-dotenv==1.0.0
+
+# Build Dependencies (fix for setuptools issue)
+setuptools>=65.5.1
+wheel>=0.38.0
