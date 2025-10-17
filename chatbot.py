@@ -39,18 +39,42 @@ class AcademicFAQChatbot:
     """Academic FAQ chatbot powered by a semantic search engine."""
 
     def __init__(self) -> None:
-        self.search_engine = SemanticSearchEngine(embedding_backend="gemini")
+        import logging
+        self.logger = logging.getLogger(__name__)
+        
+        self.logger.info("🔄 Initializing AcademicFAQChatbot...")
+        
+        try:
+            self.search_engine = SemanticSearchEngine(embedding_backend="gemini")
+            self.logger.info("✅ Search engine initialized")
+        except Exception as e:
+            self.logger.error(f"❌ Failed to initialize search engine: {e}")
+            raise
+            
         self.is_trained = False
 
-        self.rephraser = GeminiRephraser()
+        try:
+            self.rephraser = GeminiRephraser()
+            self.logger.info(f"✅ Rephraser initialized (available: {self.rephraser.is_available()})")
+        except Exception as e:
+            self.logger.error(f"❌ Failed to initialize rephraser: {e}")
+            raise
 
         if os.path.exists("models/academic_faq.faiss"):
-            self.is_trained = self.search_engine.load_index("models/academic_faq")
-            if self.is_trained and self.search_engine.embedding_backend != "gemini":
-                print(
-                    "⚠️  Loaded knowledge base was built without Gemini embeddings. "
-                    "Rebuild with `python knowledge_base_builder.py --embedding-backend gemini` for best results."
-                )
+            self.logger.info("📂 Found knowledge base files, loading...")
+            try:
+                self.is_trained = self.search_engine.load_index("models/academic_faq")
+                self.logger.info(f"✅ Knowledge base loaded. Is trained: {self.is_trained}")
+                if self.is_trained and self.search_engine.embedding_backend != "gemini":
+                    self.logger.warning(
+                        "⚠️  Loaded knowledge base was built without Gemini embeddings. "
+                        "Rebuild with `python knowledge_base_builder.py --embedding-backend gemini` for best results."
+                    )
+            except Exception as e:
+                self.logger.error(f"❌ Failed to load knowledge base: {e}")
+                raise
+        else:
+            self.logger.warning("⚠️  Knowledge base not found at models/academic_faq.faiss")
 
         self.greetings: List[str] = [
             "hello",

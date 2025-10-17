@@ -225,6 +225,11 @@ class SemanticSearchEngine:
     """Builds and queries a FAISS-backed semantic search index."""
 
     def __init__(self, model_name="all-MiniLM-L6-v2", *, embedding_backend: str = "sbert"):
+        import logging
+        self.logger = logging.getLogger(__name__)
+        
+        self.logger.info(f"🔄 Initializing SemanticSearchEngine with backend: {embedding_backend}")
+        
         self.model_name = model_name
         self.embedding_backend = embedding_backend.lower().strip()
         self.model: Optional[SentenceTransformer] = None
@@ -232,19 +237,30 @@ class SemanticSearchEngine:
         self._vector_search_available = False
 
         if self.embedding_backend == "gemini":
-            self._embedding_provider = GeminiEmbeddingBackend()
-            if not self._embedding_provider.is_available():
-                init_error = self._embedding_provider.init_error or "unknown error"
-                print(f"⚠️  Gemini embeddings unavailable ({init_error}). Falling back to sentence-transformer model.")
+            try:
+                self._embedding_provider = GeminiEmbeddingBackend()
+                if not self._embedding_provider.is_available():
+                    init_error = self._embedding_provider.init_error or "unknown error"
+                    self.logger.warning(f"⚠️  Gemini embeddings unavailable ({init_error}). Falling back to sentence-transformer model.")
+                    self.embedding_backend = "sbert"
+                    self._embedding_provider = None
+                else:
+                    self.logger.info("✅ Gemini embeddings initialized successfully")
+            except Exception as e:
+                self.logger.error(f"❌ Error initializing Gemini embeddings: {e}")
                 self.embedding_backend = "sbert"
                 self._embedding_provider = None
 
         if self.embedding_backend not in {"sbert", "gemini"}:
-            print(f"⚠️  Unknown embedding backend '{embedding_backend}'. Defaulting to sentence-transformer model.")
+            self.logger.warning(f"⚠️  Unknown embedding backend '{embedding_backend}'. Defaulting to sentence-transformer model.")
             self.embedding_backend = "sbert"
 
         if self.embedding_backend == "sbert":
-            self._ensure_sentence_transformer()
+            try:
+                self._ensure_sentence_transformer()
+            except Exception as e:
+                self.logger.error(f"❌ Error loading sentence transformer: {e}")
+                raise
 
         self.index = None
         self.documents: List[str] = []
@@ -254,11 +270,14 @@ class SemanticSearchEngine:
         self._reranker: Optional[Any] = None
         self._reranker_loaded = False
         self.keyword_index: DefaultDict[str, Set[int]] = defaultdict(set)
+        
+        self.logger.info("✅ SemanticSearchEngine initialized")
 
     def _ensure_sentence_transformer(self) -> None:
         if self.model is None:
-            print("Loading sentence transformer model...")
+            self.logger.info(f"📥 Loading sentence transformer model: {self.model_name}")
             self.model = SentenceTransformer(self.model_name)
+            self.logger.info("✅ Sentence transformer loaded")
 
     def _ensure_gemini_provider(self) -> bool:
         if self._embedding_provider and self._embedding_provider.is_available():
