@@ -6,7 +6,7 @@ import os
 import re
 from typing import Any, Dict, List, Optional, Set
 
-from gemini_client import GeminiRephraser
+from gemini_client import GeminiRephraser, QueryExpansion
 from semantic_search import STOPWORDS, SemanticSearchEngine
 
 
@@ -131,6 +131,22 @@ class AcademicFAQChatbot:
             )
 
         expanded_query, expanded_terms = self._expand_query(processed_query)
+        intent_hint: Optional[str] = None
+
+        llm_expansion = self._expand_query_with_gemini(processed_query)
+        if llm_expansion:
+            for term in llm_expansion.focus_terms:
+                cleaned = term.strip()
+                if cleaned:
+                    expanded_terms.add(cleaned.lower())
+
+            extra_queries = [item for item in llm_expansion.search_queries if item]
+            if extra_queries:
+                expansion_text = " ".join(extra_queries)
+                expanded_query = f"{expanded_query} {expansion_text}".strip()
+
+            if llm_expansion.intent:
+                intent_hint = llm_expansion.intent
 
         results = self.search_engine.search(expanded_query, top_k=8)
 
@@ -163,6 +179,7 @@ class AcademicFAQChatbot:
             sentence_hits,
             results,
             expanded_terms,
+            intent_hint=intent_hint,
         )
         if presentable_response:
             return presentable_response
@@ -198,6 +215,21 @@ class AcademicFAQChatbot:
 
         return expanded_query, term_set
 
+    def _expand_query_with_gemini(self, query: str) -> Optional[QueryExpansion]:
+        if not self.rephraser.is_available():
+            return None
+
+        try:
+            expansion = self.rephraser.expand_query(query)
+        except Exception as exc:  # pragma: no cover - defensive logging
+            self.logger.debug(f"Gemini query expansion failed: {exc}")
+            return None
+
+        if not isinstance(expansion, QueryExpansion):
+            return None
+
+        return expansion
+
     @staticmethod
     def _extract_tokens(text: str) -> Set[str]:
         return {
@@ -222,6 +254,8 @@ class AcademicFAQChatbot:
         sentence_hits: List[Dict[str, Any]],
         results: List[Dict[str, Any]],
         expanded_terms: Set[str],
+        *,
+        intent_hint: Optional[str] = None,
     ) -> str:
         query_tokens = self._extract_tokens(processed_query)
         query_tokens.update({term.lower() for term in expanded_terms if len(term) > 2})
@@ -247,7 +281,7 @@ class AcademicFAQChatbot:
         if not sentences:
             return ""
 
-        return self._format_presentable_answer(raw_query, sentences, results)
+        return self._format_presentable_answer(raw_query, sentences, results, intent_hint=intent_hint)
 
     def _gather_sentences_from_hits(
         self,
@@ -328,8 +362,10 @@ class AcademicFAQChatbot:
         raw_query: str,
         sentences: List[Dict[str, Any]],
         results: List[Dict[str, Any]],
+        *,
+        intent_hint: Optional[str] = None,
     ) -> str:
-        intro = self._build_intro(raw_query)
+        intro = self._build_intro(raw_query, intent_hint)
         question_type = self._get_question_type(raw_query)
         topic_phrase = self._derive_topic_phrase(raw_query)
 
@@ -384,10 +420,27 @@ class AcademicFAQChatbot:
             fallback_sections.append(intro)
 
         if fallback_points:
-            bullets = "\n".join(f"• {point}" for point in fallback_points)
+            bullets = "\n".join(f"- {point}" for point in fallback_points)
             fallback_sections.append(bullets)
+        source_labels: List[str] = []
+        for entry in sentences:
+            label = self._format_source_label(entry.get("metadata", {}))
+            if label:
+                source_labels.append(label)
 
-        # NO source citations in fallback responses
+        if not source_labels:
+            for result in results:
+                label = self._format_source_label(result.get("metadata", {}))
+                if label:
+                    source_labels.append(label)
+
+        if source_labels:
+            ordered_sources: List[str] = []
+            for label in source_labels:
+                if label not in ordered_sources:
+                    ordered_sources.append(label)
+            fallback_sections.append("Sources: " + ", ".join(ordered_sources))
+
         fallback_text = "\n\n".join(section.strip() for section in fallback_sections if section.strip())
 
         if fallback_text:
@@ -431,11 +484,13 @@ class AcademicFAQChatbot:
         length_penalty = len(sentence) / 250
         return token_matches - length_penalty
 
-    def _build_intro(self, raw_query: str) -> str:
+    def _build_intro(self, raw_query: str, intent_hint: Optional[str] = None) -> str:
         cleaned = raw_query.strip() or "your question"
         cleaned = cleaned.rstrip("?!.")
         if not cleaned:
             cleaned = "your question"
+        if intent_hint:
+            return f"Here's what the handbook clarifies about {intent_hint.lower()}:"
         return f"Here's what the handbook clarifies about \"{cleaned}\":"
 
     @staticmethod

@@ -2,6 +2,7 @@
 chatbot_env/
 venv/
 env/
+academic-chatbot/chatbot_env/
 
 # Python Cache
 __pycache__/

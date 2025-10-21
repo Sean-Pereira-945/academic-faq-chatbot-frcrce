@@ -2,13 +2,23 @@
 
 from __future__ import annotations
 
+import json
 import os
-from typing import Dict, Iterable, List, Optional
+import re
+from dataclasses import dataclass
+from typing import Any, Dict, Iterable, List, Optional
 
 try:  # pragma: no cover - optional dependency is exercised indirectly
     from dotenv import load_dotenv
 except ImportError:  # pragma: no cover - python-dotenv is optional at runtime
     load_dotenv = None  # type: ignore
+
+
+@dataclass
+class QueryExpansion:
+    search_queries: List[str]
+    focus_terms: List[str]
+    intent: Optional[str] = None
 
 
 class GeminiRephraser:
@@ -81,6 +91,50 @@ class GeminiRephraser:
 
         return bool(self._available and self._model is not None)
 
+    def expand_query(self, query: str) -> Optional[QueryExpansion]:
+        """Use Gemini to infer better search queries and focus terms."""
+
+        if not self.is_available():
+            return None
+
+        prompt = (
+            "You improve academic FAQ search queries."
+            "\nQuestion: "
+            f"{query.strip()}"
+            "\nRespond with JSON containing keys search_queries (max 3 items),"
+            " focus_terms (max 6 lower-case terms), and intent (short noun phrase)."
+            "\nRules:"
+            "\n- Each search query must be a concise phrase under 12 words"
+            "\n- focus_terms must omit stopwords and punctuation"
+            "\n- intent should summarise the student's goal in under 8 words"
+            "\nOutput JSON only."
+        )
+
+        try:
+            result = self._model.generate_content(prompt)  # type: ignore[no-untyped-call]
+        except Exception as exc:  # pragma: no cover
+            self._last_error = str(exc)
+            return None
+
+        payload = self._collect_text(result)
+        if not payload:
+            return None
+
+        data = self._extract_json(payload)
+        if not data:
+            return None
+
+        queries = [item.strip() for item in data.get("search_queries", []) if isinstance(item, str) and item.strip()]
+        terms = [item.strip().lower() for item in data.get("focus_terms", []) if isinstance(item, str) and item.strip()]
+        intent = data.get("intent")
+        if intent and isinstance(intent, str):
+            intent = intent.strip()
+
+        if not queries and not terms:
+            return None
+
+        return QueryExpansion(search_queries=queries[:3], focus_terms=terms[:6], intent=intent or None)
+
     def rephrase(
         self,
         query: str,
@@ -123,23 +177,7 @@ class GeminiRephraser:
             self._last_error = str(exc)
             return None
 
-        candidates = getattr(result, "candidates", None)
-        if not candidates:
-            return None
-
-        text_parts = []
-        for candidate in candidates:
-            content = getattr(candidate, "content", None)
-            if not content:
-                continue
-            parts = getattr(content, "parts", None)
-            if not parts:
-                continue
-            for part in parts:
-                text = getattr(part, "text", None)
-                if text:
-                    text_parts.append(text.strip())
-        final = "\n\n".join(fragment for fragment in text_parts if fragment)
+        final = self._collect_text(result)
         return final.strip() or None
 
     def compose_answer(
@@ -189,23 +227,7 @@ class GeminiRephraser:
             self._last_error = str(exc)
             return None
 
-        candidates = getattr(result, "candidates", None)
-        if not candidates:
-            return None
-
-        text_parts = []
-        for candidate in candidates:
-            content = getattr(candidate, "content", None)
-            if not content:
-                continue
-            parts = getattr(content, "parts", None)
-            if not parts:
-                continue
-            for part in parts:
-                text = getattr(part, "text", None)
-                if text:
-                    text_parts.append(text.strip())
-        final = "\n\n".join(fragment for fragment in text_parts if fragment)
+        final = self._collect_text(result)
         return final.strip() or None
 
     @property
@@ -219,6 +241,36 @@ class GeminiRephraser:
         """Return the last error encountered during a generate call, if any."""
 
         return self._last_error
+
+    def _collect_text(self, result) -> str:
+        candidates = getattr(result, "candidates", None)
+        if not candidates:
+            return ""
+
+        snippets: List[str] = []
+        for candidate in candidates:
+            content = getattr(candidate, "content", None)
+            if not content:
+                continue
+            parts = getattr(content, "parts", None)
+            if not parts:
+                continue
+            for part in parts:
+                text = getattr(part, "text", None)
+                if text:
+                    snippets.append(text.strip())
+
+        return "\n\n".join(fragment for fragment in snippets if fragment)
+
+    @staticmethod
+    def _extract_json(payload: str) -> Optional[Dict[str, Any]]:
+        match = re.search(r"\{.*\}", payload, re.DOTALL)
+        if not match:
+            return None
+        try:
+            return json.loads(match.group(0))
+        except json.JSONDecodeError:
+            return None
 
     @staticmethod
     def _resolve_model_candidates(preferred: str) -> List[str]:
@@ -246,4 +298,4 @@ class GeminiRephraser:
         return candidates
 
 
-__all__ = ["GeminiRephraser"]
+__all__ = ["GeminiRephraser", "QueryExpansion"]

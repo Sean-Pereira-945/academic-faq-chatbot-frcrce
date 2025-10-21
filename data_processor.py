@@ -2,7 +2,8 @@
 
 import os
 import re
-from typing import Dict, List, Optional
+from pathlib import Path
+from typing import Dict, Iterator, List, Optional
 
 import pdfplumber
 import PyPDF2  # noqa: F401 - retained for potential future fallbacks
@@ -16,6 +17,7 @@ class DocumentProcessor:
 
     def __init__(self):
         self.documents = []
+        self.last_run_report: List[Dict[str, object]] = []
 
     def extract_pdf_text(self, pdf_path):
         """Extract text from PDF using pdfplumber for better accuracy."""
@@ -98,40 +100,51 @@ class DocumentProcessor:
     ):
         """Process all PDFs and optional URLs into text chunks with metadata."""
         all_chunks: List[Dict[str, object]] = []
+        self.last_run_report = []
 
         # Process PDFs
-        if os.path.exists(pdf_dir):
-            for filename in os.listdir(pdf_dir):
-                if not filename.lower().endswith(".pdf"):
-                    continue
-
-                pdf_path = os.path.join(pdf_dir, filename)
-                print(f"Processing {filename}...")
+        pdf_dir_path = Path(pdf_dir)
+        if pdf_dir_path.exists():
+            for pdf_path in self._iter_pdf_files(pdf_dir_path):
+                relative_path = pdf_path.relative_to(pdf_dir_path)
+                display_name = relative_path.as_posix()
+                print(f"Processing {display_name}...")
 
                 try:
                     with pdfplumber.open(pdf_path) as pdf:
                         total_chunks = 0
+                        pages_processed = 0
                         for page_number, page in enumerate(pdf.pages, start=1):
                             page_text = page.extract_text()
                             if not page_text:
                                 continue
 
+                            pages_processed += 1
                             chunks = self.chunk_text(page_text)
                             total_chunks += len(chunks)
                             all_chunks.extend(
                                 self._build_chunk_payload(
                                     chunks,
-                                    source=f"{filename} — page {page_number}",
+                                    source=f"{display_name} — page {page_number}",
                                     document_type="pdf",
-                                    document_name=filename,
+                                    document_name=display_name,
                                     page=page_number,
                                     document_path=os.path.relpath(pdf_path, start=os.getcwd()),
                                 )
                             )
 
-                        print(f"  Added {total_chunks} chunks")
+                    self.last_run_report.append(
+                        {
+                            "path": display_name,
+                            "document_type": "pdf",
+                            "pages": pages_processed,
+                            "chunks": total_chunks,
+                            "bytes": pdf_path.stat().st_size if pdf_path.exists() else 0,
+                        }
+                    )
+                    print(f"  Added {total_chunks} chunks across {pages_processed} pages")
                 except Exception as exc:  # pragma: no cover - logging side-effect
-                    print(f"Error processing {filename}: {exc}")
+                    print(f"Error processing {display_name}: {exc}")
 
         # Process URLs
         if include_urls and urls_file and os.path.exists(urls_file):
@@ -152,8 +165,30 @@ class DocumentProcessor:
                         document_path=url,
                     )
                 )
+                self.last_run_report.append(
+                    {
+                        "path": url,
+                        "document_type": "url",
+                        "pages": None,
+                        "chunks": len(chunks),
+                        "bytes": None,
+                    }
+                )
                 print(f"  Added {len(chunks)} chunks")
         elif include_urls and urls_file:
             print(f"⚠️  URLs file not found: {urls_file}")
 
         return all_chunks
+
+    def _iter_pdf_files(self, root: Path) -> Iterator[Path]:
+        """Yield PDF files recursively under the given root directory."""
+        if not root.exists():
+            return iter(())
+
+        def generator() -> Iterator[Path]:
+            for dirpath, _, filenames in os.walk(root):
+                for filename in filenames:
+                    if filename.lower().endswith(".pdf"):
+                        yield Path(dirpath) / filename
+
+        return generator()
