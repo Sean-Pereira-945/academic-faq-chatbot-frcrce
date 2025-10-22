@@ -230,7 +230,7 @@ Add the following in the Render dashboard (or copy/edit directly in `render.yaml
 - The script simply runs:
 
 	```bash
-	gunicorn --workers 1 --bind 0.0.0.0:$PORT --timeout 120 --log-level info --access-logfile - --error-logfile - --preload wsgi:app
+		gunicorn --worker-class gevent --workers 1 --bind 0.0.0.0:$PORT --timeout 120 --log-level info --access-logfile - --error-logfile - --preload wsgi:app
 	```
 
 - If you edit the start command in the dashboard, simply point it back to `bash start.sh` (or copy the script contents) rather than pasting a Procfile-style entry.
