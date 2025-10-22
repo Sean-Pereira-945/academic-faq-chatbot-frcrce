@@ -227,6 +227,12 @@ Add the following in the Render dashboard (or copy/edit directly in `render.yaml
 
 ### 4. Start command
 - Render now runs a lightweight `start.sh` script which executes gunicorn with the correct flags. The Blueprint sets `startCommand: bash start.sh`, so Render never sees the `web:` prefix.
+- The script simply runs:
+
+	```bash
+	gunicorn --workers 1 --bind 0.0.0.0:$PORT --timeout 120 --log-level info --access-logfile - --error-logfile - --preload wsgi:app
+	```
+
 - If you edit the start command in the dashboard, simply point it back to `bash start.sh` (or copy the script contents) rather than pasting a Procfile-style entry.
 
 ### 5. Post-deploy checklist
