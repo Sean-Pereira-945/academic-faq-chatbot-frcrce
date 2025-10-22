@@ -226,8 +226,8 @@ Add the following in the Render dashboard (or copy/edit directly in `render.yaml
 - If the files are absent, `build.sh` automatically rebuilds the index from PDFs located in `data/pdfs/` (URLs are skipped during the build to avoid long external fetches). Ensure any required PDFs live in the repo or are fetched at runtime.
 
 ### 4. Start command
-- Render now runs a lightweight `start.sh` script which executes gunicorn with the correct flags. The Blueprint sets `startCommand: ./start.sh`, so Render never sees the `web:` prefix.
-- If you edit the start command in the dashboard, simply point it back to `./start.sh` (or copy the script contents) rather than pasting a Procfile-style entry.
+- Render now runs a lightweight `start.sh` script which executes gunicorn with the correct flags. The Blueprint sets `startCommand: bash start.sh`, so Render never sees the `web:` prefix.
+- If you edit the start command in the dashboard, simply point it back to `bash start.sh` (or copy the script contents) rather than pasting a Procfile-style entry.
 
 ### 5. Post-deploy checklist
 - Hit `/health` to confirm the service is up.
