@@ -225,7 +225,13 @@ Add the following in the Render dashboard (or copy/edit directly in `render.yaml
 - If you commit `models/academic_faq.faiss` + `models/academic_faq_data.pkl`, Render will deploy them as-is.
 - If the files are absent, `build.sh` automatically rebuilds the index from PDFs located in `data/pdfs/` (URLs are skipped during the build to avoid long external fetches). Ensure any required PDFs live in the repo or are fetched at runtime.
 
-### 4. Post-deploy checklist
+### 4. Start command
+- Render expects the **raw** process command—do **not** prefix it with `web:` (that syntax is only for Procfiles).
+- The Blueprint already provides the correct command:  
+	`gunicorn --worker-class gevent --workers 1 --bind 0.0.0.0:$PORT --timeout 120 --log-level info --access-logfile - --error-logfile - --preload wsgi:app`
+- If you edit the service in the dashboard, paste just the portion above; otherwise Render will try to run `web:` as a binary and the deploy fails with `bash: line 1: web:: command not found`.
+
+### 5. Post-deploy checklist
 - Hit `/health` to confirm the service is up.
 - Call `/api/status` for knowledge-base stats and embedding backend confirmation.
 - Load `/chat` to exercise the UI and validate Gemini-backed answers.
