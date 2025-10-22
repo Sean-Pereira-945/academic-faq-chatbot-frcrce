@@ -6,6 +6,14 @@ import os
 import re
 from typing import Any, Dict, List, Optional, Set
 
+try:
+    from dotenv import load_dotenv
+except ImportError:  # pragma: no cover - optional dependency
+    load_dotenv = None
+
+if load_dotenv is not None:
+    load_dotenv()
+
 from gemini_client import GeminiRephraser, QueryExpansion
 from semantic_search import STOPWORDS, SemanticSearchEngine
 
@@ -99,11 +107,11 @@ class AcademicFAQChatbot:
 
     def is_greeting(self, query: str) -> bool:
         """Check if query is a greeting."""
-        return any(greeting in query.lower() for greeting in self.greetings)
+        return self._contains_phrase(query, self.greetings)
 
     def is_farewell(self, query: str) -> bool:
         """Check if query is a farewell."""
-        return any(farewell in query.lower() for farewell in self.farewells)
+        return self._contains_phrase(query, self.farewells)
 
     def generate_response(self, query: str) -> str:
         """Generate response based on user query."""
@@ -195,6 +203,20 @@ class AcademicFAQChatbot:
 
     # ------------------------------------------------------------------
     # Helper methods
+    def _contains_phrase(self, text: str, phrases: List[str]) -> bool:
+        normalized = text.lower()
+        tokens = set(re.findall(r"\b\w+\b", normalized))
+
+        for phrase in phrases:
+            lowered = phrase.lower()
+            if " " in lowered:
+                if lowered in normalized:
+                    return True
+            elif lowered in tokens:
+                return True
+
+        return False
+
     def _expand_query(self, query: str) -> tuple[str, Set[str]]:
         tokens = self._extract_tokens(query)
         expanded_terms: Set[str] = set()
@@ -386,9 +408,15 @@ class AcademicFAQChatbot:
             if first_sentence:
                 formatted_points = [self._clean_sentence(first_sentence)]
 
+        def _trim_snippet(text: str, limit: int = 800) -> str:
+            cleaned = str(text).strip()
+            if len(cleaned) > limit:
+                return cleaned[: limit - 3].rstrip() + "..."
+            return cleaned
+
         chunk_snippets = [
             {
-                "text": str(result.get("text", "")),
+                "text": _trim_snippet(result.get("text", "")),
                 "source": self._format_source_label(result.get("metadata", {})),
             }
             for result in results
@@ -396,13 +424,21 @@ class AcademicFAQChatbot:
         ]
         sentence_snippets = [
             {
-                "text": str(entry.get("sentence", "")),
+                "text": _trim_snippet(entry.get("sentence", ""), limit=400),
                 "source": self._format_source_label(entry.get("metadata", {})),
             }
             for entry in sentences
             if str(entry.get("sentence", "")).strip()
         ]
-        snippets_for_llm = chunk_snippets or sentence_snippets
+
+        snippets_for_llm: List[Dict[str, str]] = []
+        if sentence_snippets:
+            snippets_for_llm.extend(sentence_snippets[:6])
+        if chunk_snippets and len(snippets_for_llm) < 3:
+            needed = 6 - len(snippets_for_llm)
+            snippets_for_llm.extend(chunk_snippets[: max(needed, 3)])
+        if not snippets_for_llm:
+            snippets_for_llm = chunk_snippets or sentence_snippets
 
         llm_answer: Optional[str] = None
         llm_answer = self.rephraser.compose_answer(raw_query, snippets_for_llm)

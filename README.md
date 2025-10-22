@@ -199,6 +199,41 @@ Consider wiring these commands into CI (GitHub Actions, Azure DevOps, etc.) to e
 
 ---
 
+## 🚀 Render Deployment
+
+This repository ships with everything needed to deploy on [Render.com](https://render.com/):
+
+- `render.yaml` defines a managed web service that runs `gunicorn` against `wsgi:app`.
+- `build.sh` installs dependencies, verifies core packages, and (re)builds the knowledge base if the FAISS artifacts are missing.
+- `Procfile` mirrors the Render start command for local parity.
+
+### 1. One-time setup
+1. Commit and push the repository to GitHub.
+2. In Render, choose **New → Blueprint** and point it at this repo.
+3. Review the generated service (name, region, plan) and click **Create Resources**.
+
+### 2. Environment variables
+Add the following in the Render dashboard (or copy/edit directly in `render.yaml` if you prefer static values):
+
+| Key | Required | Notes |
+| --- | --- | --- |
+| `GEMINI_API_KEY` | ✅ | Needed for Gemini embeddings and answer synthesis. Store it as a private secret. |
+| `PYTHON_VERSION` | ✅ | Already set to `3.11` in `render.yaml`. Adjust if you upgrade. |
+| `RENDER` | ✅ | Set to `true` (provided in `render.yaml`) so the Flask app toggles production-specific behaviour. |
+
+### 3. Knowledge base artifacts
+- If you commit `models/academic_faq.faiss` + `models/academic_faq_data.pkl`, Render will deploy them as-is.
+- If the files are absent, `build.sh` automatically rebuilds the index from PDFs located in `data/pdfs/` (URLs are skipped during the build to avoid long external fetches). Ensure any required PDFs live in the repo or are fetched at runtime.
+
+### 4. Post-deploy checklist
+- Hit `/health` to confirm the service is up.
+- Call `/api/status` for knowledge-base stats and embedding backend confirmation.
+- Load `/chat` to exercise the UI and validate Gemini-backed answers.
+
+For rolling updates, push to `main`; Render auto-deploys when the Blueprint detects a commit. Disable auto-deploy in `render.yaml` by setting `autoDeploy: false` if you prefer manual promotion.
+
+---
+
 ## ✨ Gemini Integration (Optional)
 
 Level up answer fluency by letting Google Gemini rewrite the curated bullet points the chatbot collects. The integration is opt-in and falls back to deterministic formatting if unavailable.

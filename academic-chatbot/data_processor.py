@@ -23,7 +23,12 @@ class DocumentProcessor:
         try:
             with pdfplumber.open(pdf_path) as pdf:
                 for page in pdf.pages:
-                    page_text = page.extract_text()
+                    table_text = []
+                    for table in page.extract_tables() or []:
+                        rows = [" | ".join(cell or "" for cell in row) for row in table]
+                        table_text.append("\n".join(rows))
+
+                    page_text = "\n".join(filter(None, [page.extract_text(), "\n\n".join(table_text)]))
                     if page_text:
                         text += page_text + "\n"
         except Exception as exc:  # pragma: no cover - logging side-effect

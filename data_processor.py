@@ -115,7 +115,13 @@ class DocumentProcessor:
                         total_chunks = 0
                         pages_processed = 0
                         for page_number, page in enumerate(pdf.pages, start=1):
-                            page_text = page.extract_text()
+                            table_text = []
+                            for table in page.extract_tables() or []:
+                                rows = [" | ".join(cell or "" for cell in row) for row in table]
+                                table_text.append("\n".join(rows))
+
+                            page_text = "\n".join(filter(None, [page.extract_text(), "\n\n".join(table_text)]))
+
                             if not page_text:
                                 continue
 

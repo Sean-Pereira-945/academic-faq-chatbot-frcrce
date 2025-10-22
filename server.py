@@ -5,6 +5,14 @@ from __future__ import annotations
 import os
 import sys
 import logging
+
+try:
+    from dotenv import load_dotenv
+except ImportError:  # pragma: no cover - optional dependency
+    load_dotenv = None
+
+if load_dotenv is not None:
+    load_dotenv()
 from flask import Flask, render_template, request, jsonify, send_from_directory
 from flask_cors import CORS
 

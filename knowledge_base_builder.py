@@ -5,6 +5,14 @@ import argparse
 import os
 from typing import Iterable, List
 
+try:
+    from dotenv import load_dotenv
+except ImportError:  # pragma: no cover - optional dependency
+    load_dotenv = None
+
+if load_dotenv is not None:
+    load_dotenv()
+
 from chatbot import AcademicFAQChatbot
 from data_processor import DocumentProcessor
 from semantic_search import SemanticSearchEngine

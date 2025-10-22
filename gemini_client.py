@@ -243,22 +243,52 @@ class GeminiRephraser:
         return self._last_error
 
     def _collect_text(self, result) -> str:
-        candidates = getattr(result, "candidates", None)
-        if not candidates:
+        if result is None:
             return ""
 
         snippets: List[str] = []
-        for candidate in candidates:
-            content = getattr(candidate, "content", None)
-            if not content:
-                continue
-            parts = getattr(content, "parts", None)
+
+        def _collect_from_parts(parts) -> None:
             if not parts:
-                continue
+                return
             for part in parts:
                 text = getattr(part, "text", None)
-                if text:
+                if isinstance(text, str) and text.strip():
                     snippets.append(text.strip())
+
+        # Direct text property (available in newer SDK versions)
+        try:
+            direct_text = getattr(result, "text", None)
+        except Exception:  # pragma: no cover - defensive against SDK quirks
+            direct_text = None
+
+        if isinstance(direct_text, str) and direct_text.strip():
+            snippets.append(direct_text.strip())
+
+        candidates = getattr(result, "candidates", None)
+        if candidates:
+            for candidate in candidates:
+                candidate_text = getattr(candidate, "text", None)
+                if isinstance(candidate_text, str) and candidate_text.strip():
+                    snippets.append(candidate_text.strip())
+
+                content = getattr(candidate, "content", None)
+                if content is not None:
+                    parts = getattr(content, "parts", None)
+                    _collect_from_parts(parts)
+
+        # Some SDK responses expose parts on the root response
+        if not snippets:
+            content = getattr(result, "content", None)
+            if content is not None:
+                parts = getattr(content, "parts", None)
+                _collect_from_parts(parts)
+
+        if not snippets:
+            feedback = getattr(result, "prompt_feedback", None)
+            block_reason = getattr(feedback, "block_reason", None) if feedback else None
+            if block_reason:
+                self._last_error = f"Gemini blocked response: {block_reason}"
 
         return "\n\n".join(fragment for fragment in snippets if fragment)
 

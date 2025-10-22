@@ -31,6 +31,13 @@ models/*.bin
 # data/pdfs/*.pdf
 data/web_pages/*.html
 
+# Local environment lockfiles
+poetry.lock
+Pipfile
+Pipfile.lock
+poetry.toml
+poetry.yaml
+
 # Environment Variables
 .env
 .env.*

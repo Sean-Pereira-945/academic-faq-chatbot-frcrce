@@ -2,3 +2,36 @@
 # Example:
 # https://university.edu/faq
 # https://university.edu/academic-calendar
+https://frcrce.ac.in/index.php/admission/post-graduate
+
+#councils 
+https://frcrce.ac.in/index.php/students/forums/nisp
+https://frcrce.ac.in/index.php/students/forums/tedxcrce
+https://frcrce.ac.in/index.php/students/forums/ecellcrce
+https://frcrce.ac.in/index.php/students/forums/ieeecrce
+https://frcrce.ac.in/index.php/students/forums/csicrce
+https://frcrce.ac.in/index.php/students/forums/asmecrce
+https://frcrce.ac.in/index.php/students/forums/code-labs
+https://frcrce.ac.in/index.php/students/forums/mozilla-club
+https://frcrce.ac.in/index.php/students/forums/acmcrce
+https://frcrce.ac.in/index.php/students/forums/wiecrce
+https://frcrce.ac.in/index.php/students/forums/ieee-xcrce
+https://frcrce.ac.in/index.php/students/forums/nsscrce
+https://frcrce.ac.in/index.php/students/forums/gdsc-crce
+
+#computer dept 
+https://frcrce.ac.in/index.php/crce-department/comp-engg/about-compengg
+https://frcrce.ac.in/index.php/crce-department/comp-engg/from-hod-s-desk
+https://frcrce.ac.in/index.php/crce-department/comp-engg/vision-mission-compengg
+https://frcrce.ac.in/index.php/crce-department/comp-engg/peo-po-compengg
+https://frcrce.ac.in/index.php/crce-department/comp-engg/faculty-compengg
+https://frcrce.ac.in/index.php/crce-department/comp-engg/support-staff-compengg
+https://frcrce.ac.in/index.php/crce-department/comp-engg/comp-engg-infra
+https://frcrce.ac.in/index.php/crce-department/comp-engg/comp-research/comps-publications
+https://frcrce.ac.in/index.php/crce-department/comp-engg/comp-research/comps-projects
+https://frcrce.ac.in/index.php/crce-department/comp-engg/comp-research/grants
+https://fragnel.edu.in/index.php/crce-downloads/category/81-comps
+https://fragnel.edu.in/index.php/crce-department/comp-engg/innovative-teaching-and-learning-practices
+https://fragnel.edu.in/index.php/crce-department/comp-engg/placement-higher-studies-and-internship/placement-data
+https://fragnel.edu.in/index.php/crce-department/comp-engg/placement-higher-studies-and-internship/internship-data
+https://fragnel.edu.in/index.php/crce-department/comp-engg/pre-incubation-center

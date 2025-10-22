@@ -12,5 +12,7 @@ services:
         value: "3.11"
       - key: GEMINI_API_KEY
         sync: false  # Must be set manually in Render dashboard
+      - key: RENDER
+        value: "true"
     healthCheckPath: /health
     autoDeploy: true
