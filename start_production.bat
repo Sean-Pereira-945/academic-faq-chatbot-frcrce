@@ -19,7 +19,7 @@ call chatbot_env\Scripts\activate
 
 REM Install/Update gunicorn if needed
 echo Checking production dependencies...
-pip install gunicorn gevent --quiet
+pip install gunicorn --quiet
 
 REM Set production environment variable
 set RENDER=true
@@ -33,6 +33,6 @@ echo Press CTRL+C to stop the server
 echo.
 
 REM Start with gunicorn
-gunicorn --worker-class gevent --workers 1 --bind 0.0.0.0:5000 --timeout 120 wsgi:app
+gunicorn --workers 1 --bind 0.0.0.0:5000 --timeout 120 wsgi:app
 
 pause

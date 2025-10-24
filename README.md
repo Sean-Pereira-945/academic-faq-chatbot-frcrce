@@ -6,7 +6,7 @@ A premium AI-powered academic assistant that provides instant answers to academi
 | --- | --- | --- |
 | Phase 1 | Environment setup, dependency pinning, project scaffolding | ✅ Completed |
 | Phase 2 | Data ingestion, chunking, embedding, FAISS indexing | ✅ Completed |
-| Phase 3 | Chatbot core logic, Streamlit UI | ✅ Completed |
+| Phase 3 | Chatbot core logic, Flask UI | ✅ Completed |
 | Phase 4 | Automated/manual evaluation suite, smoke + unit tests | ✅ Completed |
 | Phase 5 | Documentation, polish, and release prep | ✅ Completed |
 
@@ -20,7 +20,7 @@ A premium AI-powered academic assistant that provides instant answers to academi
 - **Optional Gemini summarisation** — With a Google Gemini API key, the assistant asks Gemini to synthesise the retrieved snippets into concise, source-cited summaries tailored to each question.
 - **Gemini-powered retrieval (optional)** — Swap the embedding backend to Gemini's `text-embedding-004` model for a deeper semantic understanding of your PDFs.
 - **Smart reranking** — Cross-encoder re-ranking plus a lexical fallback ensure low-confidence queries (like "financial aid") still surface the best-matching handbook snippets instead of generic fallbacks.
-- **Conversational UX** — Streamlit app with chat history, metrics, and guardrails for greetings and farewells.
+- **Conversational UX** — Flask-powered web app with chat history, metrics, and guardrails for greetings and farewells.
 - **Evaluation toolkit** — Automated response-time benchmarking, optional manual scoring, and exportable reports.
 - **Test coverage** — Unit tests for conversational logic plus a reusable smoke test harness.
 - **Compatibility shim** — Seamlessly supports recent `huggingface_hub` releases while honoring the pinned `sentence-transformers` version.
@@ -82,7 +82,7 @@ Visit http://localhost:5000 for the landing page or http://localhost:5000/chat t
 
 ## 🌐 Web Interface
 
-The application features a premium dark-themed interface with two main pages:
+The application features a premium dark-themed interface with two main pages, served via Flask templates and vanilla JavaScript—no Streamlit runtime required:
 
 ### Landing Page (/)
 - Animated hero section with gradient text effects
@@ -163,7 +163,7 @@ if not bot.is_trained:
 
 print(bot.generate_response("How do I register for classes?"))
 ```
-`generate_response` handles greetings, fallbacks, and confidence thresholds automatically. Use `get_stats()` to report chunk counts inside the Streamlit UI or custom dashboards.
+`generate_response` handles greetings, fallbacks, and confidence thresholds automatically. Use `get_stats()` to report chunk counts inside the web UI or custom dashboards.
 
 ---
 
@@ -226,14 +226,13 @@ Add the following in the Render dashboard (or copy/edit directly in `render.yaml
 - If the files are absent, `build.sh` automatically rebuilds the index from PDFs located in `data/pdfs/` (URLs are skipped during the build to avoid long external fetches). Ensure any required PDFs live in the repo or are fetched at runtime.
 
 ### 4. Start command
-- Render now runs a lightweight `start.sh` script which executes gunicorn with the correct flags. The Blueprint sets `startCommand: bash start.sh`, so Render never sees the `web:` prefix.
-- The script simply runs:
+- Render uses a direct Gunicorn start command for maximum simplicity:
 
 	```bash
-		gunicorn --worker-class gevent --workers 1 --bind 0.0.0.0:$PORT --timeout 120 --log-level info --access-logfile - --error-logfile - --preload wsgi:app
+	gunicorn --workers 1 --bind 0.0.0.0:$PORT --timeout 120 --log-level info --access-logfile - --error-logfile - wsgi:app
 	```
 
-- If you edit the start command in the dashboard, simply point it back to `bash start.sh` (or copy the script contents) rather than pasting a Procfile-style entry.
+- If you edit the start command in the dashboard, keep it in this format—no Procfile prefixes are required.
 
 ### 5. Post-deploy checklist
 - Hit `/health` to confirm the service is up.
@@ -255,7 +254,7 @@ Level up answer fluency by letting Google Gemini rewrite the curated bullet poin
 	pip install -r requirements.txt
 	```
 
-3. Expose the key in your shell before launching Streamlit or running the bot programmatically:
+3. Expose the key in your shell before starting the Flask server or running the bot programmatically:
 
 	```cmd
 	set GEMINI_API_KEY=your-api-key-here
@@ -273,7 +272,7 @@ If the key is missing or the API call fails, the chatbot automatically reverts t
 | Issue | Resolution |
 | --- | --- |
 | `Academic FAQ Assistant` says the knowledge base isn't built | Run `python knowledge_base_builder.py` and confirm `models/academic_faq.faiss` exists. |
-| Streamlit shows `ModuleNotFoundError` | Verify virtual environment activation and rerun `pip install -r requirements.txt`. |
+| Flask app fails with `ModuleNotFoundError` | Verify virtual environment activation and rerun `pip install -r requirements.txt`. |
 | Hugging Face download failures behind a firewall | Pre-download the model and set the `HF_HOME` environment variable, or copy the `sentence-transformers` model into `models/`. |
 | Evaluation script halts waiting for input | Disable manual scoring by keeping `include_manual=False` (default). |
 | PDFs produce empty chunks | Check PDF text extraction (scanned PDFs may need OCR). Consider adding Tesseract or requesting text-based versions. |
@@ -281,7 +280,7 @@ If the key is missing or the API call fails, the chatbot automatically reverts t
 ---
 
 ## 🚀 Roadmap & Next Steps
-- Expand analytics in the Streamlit sidebar (feedback capture, usage charts).
+- Add richer analytics in the chat sidebar (feedback capture, usage charts).
 - Add conversational memory or retrieval-augmented generation (RAG) summarization for multi-turn questions.
 - Integrate CI to automate `test_suite.py`, `evaluate.py`, and linting on pull requests.
 - Explore multi-tenant deployments (different academic departments or campuses).
@@ -293,7 +292,7 @@ Contributions and feedback are welcome! Open an issue or submit a pull request d
 ## 📚 Resources
 - [Sentence-Transformers Documentation](https://www.sbert.net/)
 - [FAISS](https://github.com/facebookresearch/faiss)
-- [Streamlit](https://streamlit.io/)
+- [Flask](https://flask.palletsprojects.com/)
 - [BeautifulSoup](https://www.crummy.com/software/BeautifulSoup/)
 
 ---
