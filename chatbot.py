@@ -446,7 +446,7 @@ class AcademicFAQChatbot:
             llm_answer = self.rephraser.rephrase(raw_query, formatted_points)
 
         if llm_answer:
-            return llm_answer
+            return self._deduplicate_text(llm_answer)
 
         fallback_points = formatted_points or [self._clean_sentence(str(sentences[0].get("sentence", "")))]
         fallback_points = [point for point in fallback_points if point]
@@ -478,6 +478,7 @@ class AcademicFAQChatbot:
             fallback_sections.append("Sources: " + ", ".join(ordered_sources))
 
         fallback_text = "\n\n".join(section.strip() for section in fallback_sections if section.strip())
+        fallback_text = self._deduplicate_text(fallback_text)
 
         if fallback_text:
             return fallback_text
@@ -621,6 +622,34 @@ class AcademicFAQChatbot:
     @staticmethod
     def _split_into_sentences(text: str) -> List[str]:
         return [segment for segment in re.split(r"(?<=[.!?])\s+", text) if segment.strip()]
+
+    @staticmethod
+    def _deduplicate_text(text: str) -> str:
+        if not text:
+            return ""
+
+        lines = text.splitlines()
+        seen: Set[str] = set()
+        deduped: List[str] = []
+
+        for line in lines:
+            if not line.strip():
+                # Preserve single blank lines while collapsing runs
+                if deduped and deduped[-1] != "":
+                    deduped.append("")
+                continue
+
+            normalized = re.sub(r"\s+", " ", line.strip()).lower()
+            if normalized in seen:
+                continue
+            seen.add(normalized)
+            deduped.append(line.rstrip())
+
+        # Remove trailing blank line if present
+        while deduped and not deduped[-1].strip():
+            deduped.pop()
+
+        return "\n".join(deduped).strip()
 
 
 __all__ = ["AcademicFAQChatbot"]
