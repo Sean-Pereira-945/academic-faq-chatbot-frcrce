@@ -84,6 +84,12 @@ class AcademicFAQChatbot:
         else:
             self.logger.warning("⚠️  Knowledge base not found at models/academic_faq.faiss")
 
+        try:
+            self.logger.info("🔄 Warming up embedding models and reranker...")
+            self.search_engine.preload_models()
+        except Exception as exc:
+            self.logger.warning(f"⚠️  Warm-up skipped: {exc}")
+
         self.greetings: List[str] = [
             "hello",
             "hi",

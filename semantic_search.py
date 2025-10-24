@@ -270,7 +270,7 @@ class SemanticSearchEngine:
         self._reranker: Optional[Any] = None
         self._reranker_loaded = False
         self.keyword_index: DefaultDict[str, Set[int]] = defaultdict(set)
-        
+
         self.logger.info("✅ SemanticSearchEngine initialized")
 
     def _ensure_sentence_transformer(self) -> None:
@@ -516,6 +516,14 @@ class SemanticSearchEngine:
         return scored[:max_sentences]
 
     # ------------------------------------------------------------------
+    def preload_models(self) -> None:
+        if self.embedding_backend == "sbert":
+            self._ensure_sentence_transformer()
+
+        reranker = self._get_reranker()
+        if reranker is not None:
+            self.logger.info("✅ Reranker model ready")
+
     def _get_reranker(self):
         if self._reranker_loaded:
             return self._reranker

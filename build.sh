@@ -21,6 +21,17 @@ python -c "import sentence_transformers; print(f'✅ sentence-transformers: {sen
 python -c "import faiss; print('✅ FAISS installed')"
 python -c "import google.generativeai; print('✅ Google Generative AI installed')"
 
+export HF_HOME="${PWD}/.cache/huggingface"
+mkdir -p "$HF_HOME"
+python - <<'PY'
+from sentence_transformers import SentenceTransformer, CrossEncoder
+SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+try:
+    CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
+except Exception as exc:  # pragma: no cover - informational logging only
+    print(f"⚠️  Cross-encoder preload skipped: {exc}")
+PY
+
 # Create models directory if it doesn't exist
 echo "📁 Creating models directory..."
 mkdir -p models
