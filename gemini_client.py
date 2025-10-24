@@ -139,6 +139,8 @@ class GeminiRephraser:
         self,
         query: str,
         points: Iterable[str],
+        *,
+        intent_hint: Optional[str] = None,
     ) -> Optional[str]:
         """Ask Gemini to craft a presentable answer.
 
@@ -157,6 +159,7 @@ class GeminiRephraser:
             "You are an Academic FAQ Assistant. Provide direct, concise answers to student questions.\n\n"
             "TASK: Answer the question using ONLY the facts provided below.\n\n"
             "RULES:\n"
+            "- Start by answering the question directly in the first sentence\n"
             "- Be direct and to-the-point - NO unnecessary elaboration\n"
             "- NO source citations or document references\n"
             "- Include specific details (dates, numbers, requirements) when available\n"
@@ -165,8 +168,17 @@ class GeminiRephraser:
             "- Use bullet points if listing multiple items\n"
             "- Do NOT add information beyond the provided facts\n\n"
             "STUDENT QUESTION:\n"
-            f"{query.strip()}\n\n"
-            "FACTS FROM DOCUMENTS:\n"
+            f"{query.strip()}\n"
+        )
+
+        if intent_hint:
+            prompt += (
+                "\nSTUDENT INTENT (if inferred):\n"
+                f"{intent_hint.strip()}\n"
+            )
+
+        prompt += (
+            "\nFACTS FROM DOCUMENTS:\n"
             f"{bullet_list}\n\n"
             "YOUR BRIEF ANSWER (no citations):"
         )
@@ -184,6 +196,8 @@ class GeminiRephraser:
         self,
         query: str,
         contexts: Iterable[Dict[str, str]],
+        *,
+        intent_hint: Optional[str] = None,
     ) -> Optional[str]:
         """Generate a fuller answer using the provided contextual snippets."""
 
@@ -206,17 +220,28 @@ class GeminiRephraser:
         prompt = (
             "You are an Academic FAQ Assistant. Answer questions directly and concisely based on the provided information.\n\n"
             "INSTRUCTIONS:\n"
-            "1. Give direct, to-the-point answers WITHOUT citing sources or document names\n"
-            "2. Answer ONLY based on the provided context - do not use external knowledge\n"
-            "3. If context is insufficient, say: 'I don't have complete information about this. Please contact the academic office.'\n"
-            "4. Be specific with dates, numbers, and requirements\n"
-            "5. Use clear, simple language - avoid unnecessary elaboration\n"
-            "6. Keep responses brief (80-120 words maximum)\n"
-            "7. Use bullet points or numbered lists when listing multiple items\n"
-            "8. NO source citations, NO document references, NO [Source: ...] tags\n\n"
+            "1. Your first sentence must answer the student's question explicitly.\n"
+            "2. Give direct, to-the-point answers WITHOUT citing sources or document names.\n"
+            "3. Answer ONLY based on the provided context - do not use external knowledge.\n"
+            "4. If context is insufficient, say: 'I don't have complete information about this. Please contact the academic office.'\n"
+            "5. Be specific with dates, numbers, and requirements.\n"
+            "6. Use clear, simple language - avoid unnecessary elaboration.\n"
+            "7. Keep responses brief (80-120 words maximum).\n"
+            "8. Use bullet points or numbered lists when listing multiple items.\n"
+            "9. NO source citations, NO document references, NO [Source: ...] tags.\n"
+            "10. Do not repeat the same sentence or statement.\n\n"
             "STUDENT QUESTION:\n"
-            f"{query.strip()}\n\n"
-            "INFORMATION FROM DOCUMENTS:\n"
+            f"{query.strip()}\n"
+        )
+
+        if intent_hint:
+            prompt += (
+                "\nSTUDENT INTENT (if inferred):\n"
+                f"{intent_hint.strip()}\n"
+            )
+
+        prompt += (
+            "\nINFORMATION FROM DOCUMENTS:\n"
             f"{context_block}\n\n"
             "YOUR DIRECT ANSWER (no citations):"
         )

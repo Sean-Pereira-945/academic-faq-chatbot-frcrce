@@ -441,9 +441,17 @@ class AcademicFAQChatbot:
             snippets_for_llm = chunk_snippets or sentence_snippets
 
         llm_answer: Optional[str] = None
-        llm_answer = self.rephraser.compose_answer(raw_query, snippets_for_llm)
+        llm_answer = self.rephraser.compose_answer(
+            raw_query,
+            snippets_for_llm,
+            intent_hint=intent_hint,
+        )
         if not llm_answer:
-            llm_answer = self.rephraser.rephrase(raw_query, formatted_points)
+            llm_answer = self.rephraser.rephrase(
+                raw_query,
+                formatted_points,
+                intent_hint=intent_hint,
+            )
 
         if llm_answer:
             return self._deduplicate_text(llm_answer)
