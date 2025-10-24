@@ -139,7 +139,7 @@ body {
 /* Chat Container */
 .chat-container {
     display: grid;
-    grid-template-columns: 280px 1fr 320px;
+    grid-template-columns: 280px 1fr;
     height: 100vh;
     padding-top: 73px;
 }
@@ -229,6 +229,9 @@ body {
 .sidebar-footer {
     padding: 1.5rem;
     border-top: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
 }
 
 .info-card {
@@ -524,79 +527,17 @@ body {
     color: var(--text-tertiary);
 }
 
-/* Info Panel */
-.info-panel {
-    background: var(--bg-secondary);
-    border-left: 1px solid var(--border-color);
-    padding: 2rem 1.5rem;
-    overflow-y: auto;
-}
 
-.panel-section {
-    margin-bottom: 2rem;
-    padding-bottom: 2rem;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.panel-section:last-child {
-    border-bottom: none;
-}
-
-.panel-title {
-    font-size: 1.125rem;
-    font-weight: 600;
-    margin-bottom: 1rem;
-}
-
-.status-grid {
+.quick-actions {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
-}
-
-.status-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.75rem;
-    background: var(--bg-tertiary);
-    border-radius: 0.5rem;
-}
-
-.status-label {
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-}
-
-.status-value {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--success);
-}
-
-.category-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.category-item {
-    display: flex;
-    align-items: center;
     gap: 0.75rem;
-    padding: 0.75rem;
-    background: var(--bg-tertiary);
-    border-radius: 0.5rem;
-    cursor: pointer;
-    transition: all 0.3s;
 }
 
-.category-item:hover {
-    background: var(--bg-primary);
-}
-
-.category-icon {
-    font-size: 1.25rem;
+.quick-actions-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
 }
 
 .action-button {
@@ -647,7 +588,7 @@ body {
 /* Responsive */
 @media (max-width: 1200px) {
     .chat-container {
-        grid-template-columns: 240px 1fr 280px;
+        grid-template-columns: 240px 1fr;
     }
 }
 
@@ -656,8 +597,7 @@ body {
         grid-template-columns: 1fr;
     }
     
-    .sidebar,
-    .info-panel {
+    .sidebar {
         display: none;
     }
 }
