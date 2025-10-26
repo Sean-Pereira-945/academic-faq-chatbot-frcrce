@@ -74,7 +74,7 @@ class ChatbotEvaluator:
         results: List[Dict[str, Any]] = []
         total_time = 0.0
 
-        print("🔄 Running automated evaluation...")
+        print("Running automated evaluation...")
 
         for idx, query in enumerate(self.test_queries, start=1):
             print(f"Processing query {idx}/{len(self.test_queries)}: {query[:50]}...")
@@ -97,7 +97,7 @@ class ChatbotEvaluator:
             1 for item in results if item["has_response"] and not item["not_found_response"]
         ) / len(results)
 
-        print("\n📊 Automated Evaluation Results:")
+        print("\nAutomated Evaluation Results:")
         print(f"Average Response Time: {avg_response_time:.2f}s")
         print(f"Success Rate: {success_rate:.1%}")
         print(f"Total Queries Processed: {len(results)}")
@@ -113,23 +113,23 @@ class ChatbotEvaluator:
         output_path = Path(filename)
         df = pd.DataFrame(results)
         df.to_csv(output_path, index=False)
-        print(f"💾 Results saved to {output_path}")
+        print(f"Results saved to {output_path}")
 
         json_path = output_path.with_suffix(".json")
         json_path.write_text(json.dumps(results, indent=2), encoding="utf-8")
-        print(f"💾 JSON results saved to {json_path}")
+        print(f"JSON results saved to {json_path}")
 
         return str(output_path)
 
     def run_full_evaluation(self, include_manual: bool = False) -> Tuple[List[Dict[str, Any]], str]:
         """Run complete evaluation suite (automated + optional manual)."""
-        print("🚀 Academic FAQ Chatbot - Full Evaluation")
+        print("Academic FAQ Chatbot - Full Evaluation")
         print("=" * 60)
 
         results = self.automated_evaluation()
 
         if include_manual:
-            print("\n📝 Starting manual relevance evaluation...")
+            print("\nStarting manual relevance evaluation...")
             for item in results[:5]:
                 score = self.manual_relevance_score(item["query"], item["response"])
                 item["manual_relevance_score"] = score
@@ -144,13 +144,13 @@ def main() -> None:
     evaluator = ChatbotEvaluator(chatbot)
 
     if not chatbot.is_trained:
-        print("❌ Chatbot not trained! Please run knowledge_base_builder.py first.")
+        print("Chatbot not trained! Please run knowledge_base_builder.py first.")
         return
 
     results, filename = evaluator.run_full_evaluation(include_manual=False)
 
-    print(f"\n✅ Evaluation completed! Results saved to {filename}")
-    print("💡 Review the results and iterate on your knowledge base if needed.")
+    print(f"\nEvaluation completed! Results saved to {filename}")
+    print("Review the results and iterate on your knowledge base if needed.")
 
 
 if __name__ == "__main__":

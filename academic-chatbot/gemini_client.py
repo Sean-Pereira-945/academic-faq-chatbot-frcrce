@@ -2,13 +2,23 @@
 
 from __future__ import annotations
 
+import json
 import os
-from typing import Dict, Iterable, List, Optional
+import re
+from dataclasses import dataclass
+from typing import Any, Dict, Iterable, List, Optional
 
 try:  # pragma: no cover - optional dependency is exercised indirectly
     from dotenv import load_dotenv
 except ImportError:  # pragma: no cover - python-dotenv is optional at runtime
     load_dotenv = None  # type: ignore
+
+
+@dataclass
+class QueryExpansion:
+    search_queries: List[str]
+    focus_terms: List[str]
+    intent: Optional[str] = None
 
 
 class GeminiRephraser:
@@ -81,10 +91,56 @@ class GeminiRephraser:
 
         return bool(self._available and self._model is not None)
 
+    def expand_query(self, query: str) -> Optional[QueryExpansion]:
+        """Use Gemini to infer better search queries and focus terms."""
+
+        if not self.is_available():
+            return None
+
+        prompt = (
+            "You improve academic FAQ search queries."
+            "\nQuestion: "
+            f"{query.strip()}"
+            "\nRespond with JSON containing keys search_queries (max 3 items),"
+            " focus_terms (max 6 lower-case terms), and intent (short noun phrase)."
+            "\nRules:"
+            "\n- Each search query must be a concise phrase under 12 words"
+            "\n- focus_terms must omit stopwords and punctuation"
+            "\n- intent should summarise the student's goal in under 8 words"
+            "\nOutput JSON only."
+        )
+
+        try:
+            result = self._model.generate_content(prompt)  # type: ignore[no-untyped-call]
+        except Exception as exc:  # pragma: no cover
+            self._last_error = str(exc)
+            return None
+
+        payload = self._collect_text(result)
+        if not payload:
+            return None
+
+        data = self._extract_json(payload)
+        if not data:
+            return None
+
+        queries = [item.strip() for item in data.get("search_queries", []) if isinstance(item, str) and item.strip()]
+        terms = [item.strip().lower() for item in data.get("focus_terms", []) if isinstance(item, str) and item.strip()]
+        intent = data.get("intent")
+        if intent and isinstance(intent, str):
+            intent = intent.strip()
+
+        if not queries and not terms:
+            return None
+
+        return QueryExpansion(search_queries=queries[:3], focus_terms=terms[:6], intent=intent or None)
+
     def rephrase(
         self,
         query: str,
         points: Iterable[str],
+        *,
+        intent_hint: Optional[str] = None,
     ) -> Optional[str]:
         """Ask Gemini to craft a presentable answer.
 
@@ -100,16 +156,31 @@ class GeminiRephraser:
             return None
 
         prompt = (
-            "You are an academic support assistant helping students understand handbook policies.\n"
-            "Rewrite the bullet points below into a concise, friendly response that directly answers the student's question.\n"
-            "Keep the tone neutral-professional, avoid inventing facts beyond the bullet points, and keep the answer under 160 words.\n"
-            "Paraphrase the information in your own words rather than copying the bullets verbatim.\n"
-            "If appropriate, use short paragraphs instead of bullets.\n\n"
-            "Student question: \n"
-            f"{query.strip()}\n\n"
-            "Key facts from the handbook:\n"
+            "You are an Academic FAQ Assistant. Provide direct, concise answers to student questions.\n\n"
+            "TASK: Answer the question using ONLY the facts provided below.\n\n"
+            "RULES:\n"
+            "- Start by answering the question directly in the first sentence\n"
+            "- Be direct and to-the-point - NO unnecessary elaboration\n"
+            "- NO source citations or document references\n"
+            "- Include specific details (dates, numbers, requirements) when available\n"
+            "- Use simple, clear language\n"
+            "- Keep response under 100 words\n"
+            "- Use bullet points if listing multiple items\n"
+            "- Do NOT add information beyond the provided facts\n\n"
+            "STUDENT QUESTION:\n"
+            f"{query.strip()}\n"
+        )
+
+        if intent_hint:
+            prompt += (
+                "\nSTUDENT INTENT (if inferred):\n"
+                f"{intent_hint.strip()}\n"
+            )
+
+        prompt += (
+            "\nFACTS FROM DOCUMENTS:\n"
             f"{bullet_list}\n\n"
-            "Compose the final answer now."
+            "YOUR BRIEF ANSWER (no citations):"
         )
 
         try:
@@ -118,29 +189,15 @@ class GeminiRephraser:
             self._last_error = str(exc)
             return None
 
-        candidates = getattr(result, "candidates", None)
-        if not candidates:
-            return None
-
-        text_parts = []
-        for candidate in candidates:
-            content = getattr(candidate, "content", None)
-            if not content:
-                continue
-            parts = getattr(content, "parts", None)
-            if not parts:
-                continue
-            for part in parts:
-                text = getattr(part, "text", None)
-                if text:
-                    text_parts.append(text.strip())
-        final = "\n\n".join(fragment for fragment in text_parts if fragment)
+        final = self._collect_text(result)
         return final.strip() or None
 
     def compose_answer(
         self,
         query: str,
         contexts: Iterable[Dict[str, str]],
+        *,
+        intent_hint: Optional[str] = None,
     ) -> Optional[str]:
         """Generate a fuller answer using the provided contextual snippets."""
 
@@ -180,11 +237,46 @@ class GeminiRephraser:
             self._last_error = str(exc)
             return None
 
-        candidates = getattr(result, "candidates", None)
-        if not candidates:
+        final = self._collect_text(result)
+        return final.strip() or None
+
+    def answer_without_context(
+        self,
+        query: str,
+        *,
+        intent_hint: Optional[str] = None,
+    ) -> Optional[str]:
+        """Call Gemini directly when no handbook context is available."""
+
+        if not self.is_available():
             return None
 
-        text_parts = []
+        prompt = (
+            "You are an academic support assistant. Answer the student's question even when the handbook has no direct entry.\n"
+            "Provide the best guidance you can, note any uncertainty, and point them to an appropriate office if policy details may vary.\n"
+            "Stay under 150 words and keep the tone neutral-professional."
+        )
+
+        if intent_hint:
+            prompt += f"\n\nInferred intent: {intent_hint.strip()}"
+
+        prompt += f"\n\nStudent question:\n{query.strip()}\n\nYour helpful reply:"
+
+        try:
+            result = self._model.generate_content(prompt)  # type: ignore[no-untyped-call]
+        except Exception as exc:  # pragma: no cover - remote call may fail intermittently
+            self._last_error = str(exc)
+            return None
+
+        final = self._collect_text(result)
+        return final.strip() or None
+
+    def _collect_text(self, result: Any) -> str:
+        candidates = getattr(result, "candidates", None)
+        if not candidates:
+            return ""
+
+        text_parts: List[str] = []
         for candidate in candidates:
             content = getattr(candidate, "content", None)
             if not content:
@@ -195,9 +287,35 @@ class GeminiRephraser:
             for part in parts:
                 text = getattr(part, "text", None)
                 if text:
-                    text_parts.append(text.strip())
-        final = "\n\n".join(fragment for fragment in text_parts if fragment)
-        return final.strip() or None
+                    text_parts.append(str(text).strip())
+
+        return "\n\n".join(fragment for fragment in text_parts if fragment)
+
+    def _extract_json(self, payload: str) -> Optional[Dict[str, Any]]:
+        payload = payload.strip()
+        if not payload:
+            return None
+
+        json_candidate = payload
+        if "```" in payload:
+            blocks = re.findall(r"```(?:json)?\s*([\s\S]+?)```", payload, flags=re.IGNORECASE)
+            if blocks:
+                json_candidate = blocks[-1].strip()
+
+        try:
+            return json.loads(json_candidate)
+        except json.JSONDecodeError:
+            pass
+
+        braces_match = re.search(r"\{[\s\S]*\}", payload)
+        if braces_match:
+            snippet = braces_match.group(0)
+            try:
+                return json.loads(snippet)
+            except json.JSONDecodeError:
+                return None
+
+        return None
 
     @property
     def init_error(self) -> Optional[str]:
@@ -237,4 +355,4 @@ class GeminiRephraser:
         return candidates
 
 
-__all__ = ["GeminiRephraser"]
+__all__ = ["GeminiRephraser", "QueryExpansion"]

@@ -8,12 +8,12 @@ print(f"Is trained: {bot.is_trained}")
 print(f"Embedding backend: {bot.search_engine.embedding_backend}")
 
 if bot.is_trained:
-    print("\n✅ Knowledge base is loaded!")
+    print("\nKnowledge base is loaded!")
     print("\nTesting a question...")
     response = bot.generate_response("What is the academic calendar?")
     print(f"\nResponse:\n{response}")
 else:
-    print("\n❌ Knowledge base NOT loaded!")
+    print("\nKnowledge base NOT loaded!")
     print("\nChecking files...")
     import os
     faiss_exists = os.path.exists("models/academic_faq.faiss")

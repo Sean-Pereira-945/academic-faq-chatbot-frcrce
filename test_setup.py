@@ -22,17 +22,17 @@ def check_import(module_name, friendly_name=None):
             try:
                 import semantic_search  # noqa: F401  # Ensure compatibility shim is registered
             except Exception as compat_exc:  # pragma: no cover - best-effort shim
-                print(f"⚠️  Sentence Transformers compatibility shim warning: {compat_exc}")
+                print(f"Warning: Sentence Transformers compatibility shim warning: {compat_exc}")
         importlib.import_module(module_name)
-        print(f"✅ {friendly_name} - Successfully imported")
+        print(f"{friendly_name} - Successfully imported")
         return True
     except ImportError as e:
-        print(f"❌ {friendly_name} - Import failed: {e}")
+        print(f"{friendly_name} - Import failed: {e}")
         return False
 
 def main():
     """Run all setup verification tests."""
-    print("🚀 Academic FAQ Chatbot - Setup Verification")
+    print("Academic FAQ Chatbot - Setup Verification")
     print("=" * 50)
     
     # Test Python version
@@ -62,21 +62,21 @@ def main():
     print(f"Setup Verification Results: {success_count}/{total_count} dependencies working")
     
     if success_count == total_count:
-        print("🎉 All dependencies installed successfully!")
-        print("✅ Ready to proceed to Phase 2!")
+        print("All dependencies installed successfully!")
+        print("Ready to proceed to Phase 2!")
     else:
-        print("⚠️  Some dependencies failed. Please reinstall missing packages.")
+        print("Some dependencies failed. Please reinstall missing packages.")
         
     # Test folder structure
     import os
     required_folders = ['data', 'data/pdfs', 'data/web_pages', 'models', 'tests', 'docs']
-    print(f"\n📁 Folder Structure Check:")
+    print("\nFolder Structure Check:")
     
     for folder in required_folders:
         if os.path.exists(folder):
-            print(f"✅ {folder}/ - exists")
+            print(f"{folder}/ - exists")
         else:
-            print(f"❌ {folder}/ - missing")
+            print(f"{folder}/ - missing")
 
 def test_test_import_success():
     with mock.patch.object(importlib, "import_module", return_value=None):

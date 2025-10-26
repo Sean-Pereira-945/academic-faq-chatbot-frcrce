@@ -46,9 +46,9 @@ def _parse_arguments() -> argparse.Namespace:
     )
     parser.add_argument(
         "--embedding-backend",
-        choices=["sbert", "gemini"],
+        choices=["gemini"],
         default="gemini",
-        help="Embedding backend to use for semantic indexing (default: gemini).",
+        help="Embedding backend to use for semantic indexing (Gemini is required).",
     )
     return parser.parse_args()
 
@@ -66,7 +66,7 @@ def _collect_questions(args: argparse.Namespace) -> List[str]:
                     if cleaned:
                         questions.append(cleaned)
         except FileNotFoundError:
-            print(f"⚠️  Questions file not found: {args.questions_file}")
+            print(f"Warning: questions file not found: {args.questions_file}")
 
     # Remove duplicates while preserving order
     seen = set()
@@ -89,34 +89,34 @@ def _ensure_urls_placeholder(urls_file: str) -> None:
         file.write("# Example:\n")
         file.write("# https://university.edu/faq\n")
         file.write("# https://university.edu/academic-calendar\n")
-    print(f"📝 Created {urls_file} - please add your URLs there")
+    print(f"Created {urls_file} - please add your URLs there")
 
 
 def _answer_questions(bot: AcademicFAQChatbot, questions: Iterable[str]) -> None:
     for question in questions:
-        print("\n❓ Question:", question)
+        print("\nQuestion:", question)
         answer = bot.generate_response(question)
         print("\n" + answer + "\n")
 
 
 def _interactive_loop(bot: AcademicFAQChatbot) -> None:
-    print("\n🤖 Entering interactive mode. Type 'exit' or press Ctrl+C to stop.\n")
+    print("\nEntering interactive mode. Type 'exit' or press Ctrl+C to stop.\n")
     try:
         while True:
             question = input("You: ").strip()
             if not question or question.lower() in {"exit", "quit", "q"}:
-                print("👋 Exiting interactive mode.")
+                print("Exiting interactive mode.")
                 break
             answer = bot.generate_response(question)
             print("\n" + answer + "\n")
     except KeyboardInterrupt:
-        print("\n👋 Exiting interactive mode.")
+        print("\nExiting interactive mode.")
 
 
 def main():
     """Entry point for building the semantic knowledge base."""
     args = _parse_arguments()
-    print("🚀 Academic FAQ Chatbot - Knowledge Base Builder")
+    print("Academic FAQ Chatbot - Knowledge Base Builder")
     print("=" * 60)
 
     # Initialize components
@@ -129,7 +129,7 @@ def main():
         _ensure_urls_placeholder(urls_file)
 
     # Process all documents
-    print("📚 Processing documents...")
+    print("Processing documents...")
     all_chunks = processor.process_all_documents(
         pdf_dir=args.pdf_dir,
         urls_file=urls_file if urls_file else "",
@@ -139,13 +139,13 @@ def main():
     pdf_url_chunk_count = len(all_chunks)
 
     if not all_chunks:
-        print("❌ No documents found! Please add PDFs to data/pdfs/ or URLs to data/urls.txt")
+        print("No documents found. Please add PDFs to data/pdfs/ or URLs to data/urls.txt")
         return
 
     if pdf_url_chunk_count:
-        print(f"📄 Total chunks extracted: {pdf_url_chunk_count}")
+        print(f"Total chunks extracted: {pdf_url_chunk_count}")
     else:
-        print("⚠️  No chunks extracted from PDFs or URLs")
+        print("No chunks extracted from PDFs or URLs")
 
     # Build knowledge base
     search_engine.build_knowledge_base(all_chunks)
@@ -155,8 +155,8 @@ def main():
     os.makedirs(models_dir, exist_ok=True)
     search_engine.save_index("models/academic_faq")
 
-    print("✅ Knowledge base building completed!")
-    print("📊 Summary:")
+    print("Knowledge base building completed!")
+    print("Summary:")
     print(f"  - Total text chunks: {len(all_chunks)}")
     print("  - Embedding backend:", search_engine.embedding_backend.upper())
     print("  - Model saved to: models/academic_faq")
@@ -169,7 +169,7 @@ def main():
         bot.is_trained = True
 
         if pending_questions:
-            print("\n🔎 Answering provided questions using PDF-derived knowledge...")
+            print("\nAnswering provided questions using PDF-derived knowledge...")
             _answer_questions(bot, pending_questions)
 
         if args.interactive:

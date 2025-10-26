@@ -49,46 +49,46 @@ class AcademicFAQChatbot:
     def __init__(self) -> None:
         import logging
         self.logger = logging.getLogger(__name__)
-        
-        self.logger.info("🔄 Initializing AcademicFAQChatbot...")
-        
+
+        self.logger.info("Initializing AcademicFAQChatbot")
+
         try:
             self.search_engine = SemanticSearchEngine(embedding_backend="gemini")
-            self.logger.info("✅ Search engine initialized")
+            self.logger.info("Search engine initialized")
         except Exception as e:
-            self.logger.error(f"❌ Failed to initialize search engine: {e}")
+            self.logger.error("Failed to initialize search engine: %s", e)
             raise
             
         self.is_trained = False
 
         try:
             self.rephraser = GeminiRephraser()
-            self.logger.info(f"✅ Rephraser initialized (available: {self.rephraser.is_available()})")
+            self.logger.info("Rephraser initialized (available: %s)", self.rephraser.is_available())
         except Exception as e:
-            self.logger.error(f"❌ Failed to initialize rephraser: {e}")
+            self.logger.error("Failed to initialize rephraser: %s", e)
             raise
 
         if os.path.exists("models/academic_faq.faiss"):
-            self.logger.info("📂 Found knowledge base files, loading...")
+            self.logger.info("Found knowledge base files, loading")
             try:
                 self.is_trained = self.search_engine.load_index("models/academic_faq")
-                self.logger.info(f"✅ Knowledge base loaded. Is trained: {self.is_trained}")
+                self.logger.info("Knowledge base loaded. Is trained: %s", self.is_trained)
                 if self.is_trained and self.search_engine.embedding_backend != "gemini":
                     self.logger.warning(
-                        "⚠️  Loaded knowledge base was built without Gemini embeddings. "
+                        "Loaded knowledge base was built without Gemini embeddings. "
                         "Rebuild with `python knowledge_base_builder.py --embedding-backend gemini` for best results."
                     )
             except Exception as e:
-                self.logger.error(f"❌ Failed to load knowledge base: {e}")
+                self.logger.error("Failed to load knowledge base: %s", e)
                 raise
         else:
-            self.logger.warning("⚠️  Knowledge base not found at models/academic_faq.faiss")
+            self.logger.warning("Knowledge base not found at models/academic_faq.faiss")
 
         try:
-            self.logger.info("🔄 Warming up embedding models and reranker...")
+            self.logger.info("Warming up embedding models and reranker")
             self.search_engine.preload_models()
         except Exception as exc:
-            self.logger.warning(f"⚠️  Warm-up skipped: {exc}")
+            self.logger.warning("Warm-up skipped: %s", exc)
 
         self.greetings: List[str] = [
             "hello",
@@ -173,6 +173,9 @@ class AcademicFAQChatbot:
             if lexical_results:
                 results = lexical_results
             else:
+                direct_answer = self._answer_directly_with_gemini(query, intent_hint)
+                if direct_answer:
+                    return direct_answer
                 return (
                     "After reviewing the handbook, I couldn't locate a dedicated section on that topic. "
                     "Please connect with the academic office for the latest guidance, and I can help search the handbook with different wording if you'd like."
@@ -184,7 +187,8 @@ class AcademicFAQChatbot:
             max_sentences=4,
         )
 
-        if not self.rephraser.is_available():
+        use_rephraser = self.rephraser.is_available()
+        if not use_rephraser:
             return self._gemini_required_message()
 
         presentable_response = self._compose_presentable_answer(
@@ -193,10 +197,16 @@ class AcademicFAQChatbot:
             sentence_hits,
             results,
             expanded_terms,
+            use_rephraser=True,
             intent_hint=intent_hint,
         )
+
         if presentable_response:
             return presentable_response
+
+        direct_answer = self._answer_directly_with_gemini(query, intent_hint)
+        if direct_answer:
+            return direct_answer
 
         return self._gemini_required_message()
 
@@ -283,6 +293,7 @@ class AcademicFAQChatbot:
         results: List[Dict[str, Any]],
         expanded_terms: Set[str],
         *,
+        use_rephraser: bool,
         intent_hint: Optional[str] = None,
     ) -> str:
         query_tokens = self._extract_tokens(processed_query)
@@ -309,7 +320,13 @@ class AcademicFAQChatbot:
         if not sentences:
             return ""
 
-        return self._format_presentable_answer(raw_query, sentences, results, intent_hint=intent_hint)
+        return self._format_presentable_answer(
+            raw_query,
+            sentences,
+            results,
+            use_rephraser=use_rephraser,
+            intent_hint=intent_hint,
+        )
 
     def _gather_sentences_from_hits(
         self,
@@ -358,7 +375,7 @@ class AcademicFAQChatbot:
 
             for sentence in self._split_into_sentences(text):
                 stripped = sentence.strip()
-                if len(stripped) < 40 or len(stripped) > 400:
+                if len(stripped) < 24 or len(stripped) > 480:
                     continue
 
                 score = base_score + self._score_sentence(stripped, query_tokens)
@@ -391,6 +408,7 @@ class AcademicFAQChatbot:
         sentences: List[Dict[str, Any]],
         results: List[Dict[str, Any]],
         *,
+        use_rephraser: bool,
         intent_hint: Optional[str] = None,
     ) -> str:
         intro = self._build_intro(raw_query, intent_hint)
@@ -447,20 +465,24 @@ class AcademicFAQChatbot:
             snippets_for_llm = chunk_snippets or sentence_snippets
 
         llm_answer: Optional[str] = None
-        llm_answer = self.rephraser.compose_answer(
-            raw_query,
-            snippets_for_llm,
-            intent_hint=intent_hint,
-        )
-        if not llm_answer:
-            llm_answer = self.rephraser.rephrase(
+        if use_rephraser and self.rephraser.is_available():
+            llm_answer = self.rephraser.compose_answer(
                 raw_query,
-                formatted_points,
+                snippets_for_llm,
                 intent_hint=intent_hint,
             )
+            if not llm_answer:
+                llm_answer = self.rephraser.rephrase(
+                    raw_query,
+                    formatted_points,
+                    intent_hint=intent_hint,
+                )
 
         if llm_answer:
             return self._deduplicate_text(llm_answer)
+
+        if use_rephraser:
+            return ""
 
         fallback_points = formatted_points or [self._clean_sentence(str(sentences[0].get("sentence", "")))]
         fallback_points = [point for point in fallback_points if point]
@@ -497,7 +519,26 @@ class AcademicFAQChatbot:
         if fallback_text:
             return fallback_text
 
-        return self._gemini_required_message()
+        return ""
+
+    def _answer_directly_with_gemini(
+        self,
+        raw_query: str,
+        intent_hint: Optional[str],
+    ) -> Optional[str]:
+        if not self.rephraser.is_available():
+            return None
+
+        try:
+            direct = self.rephraser.answer_without_context(raw_query, intent_hint=intent_hint)
+        except Exception as exc:  # pragma: no cover - defensive logging
+            self.logger.debug(f"Gemini direct answer failed: {exc}")
+            return None
+
+        if not direct:
+            return None
+
+        return self._deduplicate_text(direct)
 
     def _format_source_label(self, metadata: Dict[str, Any]) -> str:
         if not metadata:

@@ -26,10 +26,12 @@ STOPWORDS = {
     "and",
     "are",
     "as",
+    "about",
     "at",
     "be",
     "but",
     "by",
+    "tell",
     "for",
     "from",
     "have",
@@ -108,10 +110,8 @@ if not hasattr(huggingface_hub, "cached_download"):  # pragma: no cover - runtim
     huggingface_hub.cached_download = _legacy_cached_download  # type: ignore[attr-defined]
 
 try:  # pragma: no cover - import guard for optional reranker
-    from sentence_transformers import CrossEncoder, SentenceTransformer
+    from sentence_transformers import CrossEncoder
 except ImportError:  # pragma: no cover - fallback without reranker
-    from sentence_transformers import SentenceTransformer
-
     CrossEncoder = None  # type: ignore[misc]
 
 
@@ -224,43 +224,28 @@ class GeminiEmbeddingBackend:
 class SemanticSearchEngine:
     """Builds and queries a FAISS-backed semantic search index."""
 
-    def __init__(self, model_name="all-MiniLM-L6-v2", *, embedding_backend: str = "sbert"):
+    def __init__(self, model_name: str = "all-MiniLM-L6-v2", *, embedding_backend: str = "gemini"):
         import logging
+
         self.logger = logging.getLogger(__name__)
-        
-        self.logger.info(f"🔄 Initializing SemanticSearchEngine with backend: {embedding_backend}")
-        
+        self.logger.info("Initializing SemanticSearchEngine with backend: %s", embedding_backend)
+
         self.model_name = model_name
-        self.embedding_backend = embedding_backend.lower().strip()
-        self.model: Optional[SentenceTransformer] = None
+        self.embedding_backend = "gemini"
+        if embedding_backend.lower().strip() != "gemini":
+            self.logger.warning(
+                "Gemini embeddings are required; ignoring requested backend '%s'.",
+                embedding_backend,
+            )
+
         self._embedding_provider: Optional[GeminiEmbeddingBackend] = None
         self._vector_search_available = False
 
-        if self.embedding_backend == "gemini":
-            try:
-                self._embedding_provider = GeminiEmbeddingBackend()
-                if not self._embedding_provider.is_available():
-                    init_error = self._embedding_provider.init_error or "unknown error"
-                    self.logger.warning(f"⚠️  Gemini embeddings unavailable ({init_error}). Falling back to sentence-transformer model.")
-                    self.embedding_backend = "sbert"
-                    self._embedding_provider = None
-                else:
-                    self.logger.info("✅ Gemini embeddings initialized successfully")
-            except Exception as e:
-                self.logger.error(f"❌ Error initializing Gemini embeddings: {e}")
-                self.embedding_backend = "sbert"
-                self._embedding_provider = None
+        self._ensure_gemini_provider()
+        if not self._embedding_provider:
+            raise RuntimeError("Gemini embedding provider not initialized")
 
-        if self.embedding_backend not in {"sbert", "gemini"}:
-            self.logger.warning(f"⚠️  Unknown embedding backend '{embedding_backend}'. Defaulting to sentence-transformer model.")
-            self.embedding_backend = "sbert"
-
-        if self.embedding_backend == "sbert":
-            try:
-                self._ensure_sentence_transformer()
-            except Exception as e:
-                self.logger.error(f"❌ Error loading sentence transformer: {e}")
-                raise
+        self.logger.info("Gemini embeddings initialized successfully")
 
         self.index = None
         self.documents: List[str] = []
@@ -271,25 +256,22 @@ class SemanticSearchEngine:
         self._reranker_loaded = False
         self.keyword_index: DefaultDict[str, Set[int]] = defaultdict(set)
 
-        self.logger.info("✅ SemanticSearchEngine initialized")
+        self.logger.info("SemanticSearchEngine initialized")
 
-    def _ensure_sentence_transformer(self) -> None:
-        if self.model is None:
-            self.logger.info(f"📥 Loading sentence transformer model: {self.model_name}")
-            self.model = SentenceTransformer(self.model_name)
-            self.logger.info("✅ Sentence transformer loaded")
-
-    def _ensure_gemini_provider(self) -> bool:
+    def _ensure_gemini_provider(self) -> None:
         if self._embedding_provider and self._embedding_provider.is_available():
-            return True
+            return
 
         self._embedding_provider = GeminiEmbeddingBackend()
         if self._embedding_provider.is_available():
-            return True
+            return
 
-        if self._embedding_provider and self._embedding_provider.init_error:
-            print(f"⚠️  Gemini embeddings unavailable ({self._embedding_provider.init_error}).")
-        return False
+        init_error = None
+        if self._embedding_provider:
+            init_error = self._embedding_provider.init_error
+
+        message = init_error or "Gemini embedding service not available"
+        raise RuntimeError(message)
 
     def build_knowledge_base(self, text_chunks):
         """Convert text chunks to embeddings and build a FAISS index."""
@@ -315,24 +297,11 @@ class SemanticSearchEngine:
         self.metadata = metadata
         self._rebuild_keyword_index()
 
-        if self.embedding_backend == "gemini":
-            if not self._ensure_gemini_provider():
-                print("⚠️  Falling back to sentence-transformer embeddings.")
-                self.embedding_backend = "sbert"
-                self._embedding_provider = None
+        self._ensure_gemini_provider()
+        if not self._embedding_provider:
+            raise RuntimeError("Gemini embedding provider not initialized")
 
-        if self.embedding_backend == "gemini":
-            self.embeddings = self._embedding_provider.embed_documents(self.documents)
-        else:
-            self._ensure_sentence_transformer()
-            self.embeddings = (
-                self.model.encode(
-                    self.documents,
-                    normalize_embeddings=True,
-                    show_progress_bar=True,
-                    batch_size=32,
-                ).astype(np.float32)
-            )
+        self.embeddings = self._embedding_provider.embed_documents(self.documents)
 
         # Build FAISS index for cosine similarity
         dimension = self.embeddings.shape[1]
@@ -341,23 +310,24 @@ class SemanticSearchEngine:
 
         self._vector_search_available = True
 
-        print(f"✅ Knowledge base built with {len(text_chunks)} chunks")
+        print(f"Knowledge base built with {len(text_chunks)} chunks")
 
     def search(self, query, top_k=3):
         """Search for the most relevant documents."""
         if self.index is None or not self._vector_search_available:
             return []
 
-        if self.embedding_backend == "gemini":
-            if not self._ensure_gemini_provider():
-                return []
-            query_embedding = self._embedding_provider.embed_query(query)
-        else:
-            self._ensure_sentence_transformer()
-            query_embedding = self.model.encode(
-                [query],
-                normalize_embeddings=True,
-            ).astype(np.float32)
+        try:
+            self._ensure_gemini_provider()
+        except RuntimeError as exc:
+            self.logger.error("Gemini embeddings unavailable during search: %s", exc)
+            return []
+
+        if not self._embedding_provider:
+            self.logger.error("Gemini embedding provider missing during search")
+            return []
+
+        query_embedding = self._embedding_provider.embed_query(query)
 
         # Perform similarity search
         scores, indices = self.index.search(query_embedding, top_k)
@@ -406,13 +376,23 @@ class SemanticSearchEngine:
                     }
                 )
 
+        tokens = self._expand_query_tokens(tokens)
+
         if not tokens:
             return []
 
-        candidate_scores: Dict[int, int] = {}
+        candidate_scores: Dict[int, float] = {}
+        token_weights: Dict[str, float] = {}
+
         for token in tokens:
+            base_weight = 1.0
+            length_bonus = min(len(token) / 8.0, 1.5)
+            emphasis_bonus = 0.75 if "intern" in token else 0.0
+            weight = base_weight + length_bonus + emphasis_bonus
+            token_weights[token] = weight
+
             for idx in self.keyword_index.get(token, set()):
-                candidate_scores[idx] = candidate_scores.get(idx, 0) + 1
+                candidate_scores[idx] = candidate_scores.get(idx, 0.0) + weight
 
         if not candidate_scores:
             return []
@@ -423,10 +403,12 @@ class SemanticSearchEngine:
             reverse=True,
         )
 
+        total_weight = sum(token_weights.values()) or 1.0
+
         results: List[Dict[str, Any]] = []
         for idx, score in sorted_candidates[:max_results]:
             metadata = self.metadata[idx] if idx < len(self.metadata) else {}
-            normalized = score / len(tokens)
+            normalized = min(score / total_weight, 1.0)
             confidence = min(0.25 + normalized * 0.2, 0.65)
             results.append(
                 {
@@ -438,6 +420,32 @@ class SemanticSearchEngine:
             )
 
         return results
+
+    def _expand_query_tokens(self, tokens: Set[str]) -> Set[str]:
+        expanded: Set[str] = set()
+
+        for token in tokens:
+            if not token or len(token) <= 2 or token in STOPWORDS:
+                continue
+
+            expanded.add(token)
+
+            if token.endswith("ies") and len(token) > 3:
+                expanded.add(token[:-3] + "y")
+
+            if token.endswith("es") and len(token) > 4:
+                expanded.add(token[:-2])
+
+            if token.endswith("s") and len(token) > 3:
+                expanded.add(token[:-1])
+
+            if token.endswith("ing") and len(token) > 4:
+                stem = token[:-3]
+                expanded.add(stem)
+                if not stem.endswith("e") and len(stem) > 2:
+                    expanded.add(stem + "e")
+
+        return {item for item in expanded if len(item) > 2 and item not in STOPWORDS}
 
     # ------------------------------------------------------------------
     # Advanced retrieval helpers
@@ -457,7 +465,7 @@ class SemanticSearchEngine:
             base_score = float(result.get("score", 0.0))
 
             for sentence in self._split_into_sentences(text):
-                if len(sentence) < 40 or len(sentence) > 400:
+                if len(sentence) < 24 or len(sentence) > 480:
                     continue
                 candidates.append((sentence, metadata, base_score - rank * 0.01))
 
@@ -517,12 +525,14 @@ class SemanticSearchEngine:
 
     # ------------------------------------------------------------------
     def preload_models(self) -> None:
-        if self.embedding_backend == "sbert":
-            self._ensure_sentence_transformer()
+        try:
+            self._ensure_gemini_provider()
+        except RuntimeError as exc:
+            self.logger.warning("Unable to warm up Gemini embeddings: %s", exc)
 
         reranker = self._get_reranker()
         if reranker is not None:
-            self.logger.info("✅ Reranker model ready")
+            self.logger.info("Reranker model ready")
 
     def _get_reranker(self):
         if self._reranker_loaded:
@@ -535,7 +545,7 @@ class SemanticSearchEngine:
         try:
             self._reranker = CrossEncoder(self.reranker_name)
         except Exception as exc:  # pragma: no cover - logging side-effect
-            print(f"⚠️  Could not load cross-encoder reranker: {exc}")
+            print(f"Could not load cross-encoder reranker: {exc}")
             self._reranker = None
         return self._reranker
 
@@ -555,7 +565,11 @@ class SemanticSearchEngine:
                 if len(token) > 2 and token not in STOPWORDS
             }
             for token in tokens:
-                self.keyword_index[token].add(idx)
+                variants = self._expand_query_tokens({token})
+                if not variants:
+                    continue
+                for variant in variants:
+                    self.keyword_index[variant].add(idx)
 
     def save_index(self, filepath):
         """Persist the FAISS index and associated metadata."""
@@ -579,7 +593,7 @@ class SemanticSearchEngine:
                 file,
             )
 
-        print(f"✅ Knowledge base saved to {filepath}")
+        print(f"Knowledge base saved to {filepath}")
 
     def load_index(self, filepath):
         """Load a previously saved FAISS index and metadata."""
@@ -593,25 +607,27 @@ class SemanticSearchEngine:
                 self.documents = data["documents"]
                 self.embeddings = data["embeddings"]
                 self.metadata = data.get("metadata", [{} for _ in self.documents])
-                saved_backend = data.get("embedding_backend", "sbert")
-                self.embedding_backend = saved_backend if saved_backend in {"sbert", "gemini"} else "sbert"
+                saved_backend = data.get("embedding_backend", "gemini")
+                if saved_backend != "gemini":
+                    raise RuntimeError(
+                        "Knowledge base was built without Gemini embeddings. Rebuild using Gemini to continue."
+                    )
+                self.embedding_backend = "gemini"
                 self._rebuild_keyword_index()
 
-            if self.embedding_backend == "gemini":
-                if self._ensure_gemini_provider():
-                    self._vector_search_available = True
-                else:
-                    self._vector_search_available = False
-                    print(
-                        "⚠️  Gemini embeddings were used for this knowledge base, but the API key is unavailable. "
-                        "Semantic search will fall back to lexical matching only."
-                    )
-            else:
-                self._ensure_sentence_transformer()
+            try:
+                self._ensure_gemini_provider()
                 self._vector_search_available = True
+            except RuntimeError as exc:
+                self._vector_search_available = False
+                print(
+                    "Gemini embeddings unavailable while loading knowledge base. "
+                    "Vector search disabled until the service is restored."
+                )
+                print(f"  -> Details: {exc}")
 
-            print(f"✅ Knowledge base loaded from {filepath}")
+            print(f"Knowledge base loaded from {filepath}")
             return True
         except Exception as exc:  # pragma: no cover - logging side-effect
-            print(f"❌ Failed to load knowledge base: {exc}")
+            print(f"Failed to load knowledge base: {exc}")
             return False

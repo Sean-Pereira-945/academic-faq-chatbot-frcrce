@@ -255,6 +255,37 @@ class GeminiRephraser:
         final = self._collect_text(result)
         return final.strip() or None
 
+    def answer_without_context(
+        self,
+        query: str,
+        *,
+        intent_hint: Optional[str] = None,
+    ) -> Optional[str]:
+        """Call Gemini directly when no handbook context is available."""
+
+        if not self.is_available():
+            return None
+
+        prompt = (
+            "You are an academic support assistant. Answer the student's question even when the handbook has no direct entry.\n"
+            "Provide the best guidance you can, note any uncertainty, and point them to an appropriate office if policy details may vary.\n"
+            "Stay under 150 words and keep the tone neutral-professional."
+        )
+
+        if intent_hint:
+            prompt += f"\n\nInferred intent: {intent_hint.strip()}"
+
+        prompt += f"\n\nStudent question:\n{query.strip()}\n\nYour helpful reply:"
+
+        try:
+            result = self._model.generate_content(prompt)  # type: ignore[no-untyped-call]
+        except Exception as exc:  # pragma: no cover - remote call may fail intermittently
+            self._last_error = str(exc)
+            return None
+
+        final = self._collect_text(result)
+        return final.strip() or None
+
     @property
     def init_error(self) -> Optional[str]:
         """Expose the initialisation error for diagnostics/logging."""

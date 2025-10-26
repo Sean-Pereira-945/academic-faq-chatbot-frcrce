@@ -6,7 +6,15 @@ import os
 import re
 from typing import Any, Dict, List, Optional, Set
 
-from gemini_client import GeminiRephraser
+try:
+    from dotenv import load_dotenv
+except ImportError:  # pragma: no cover - optional dependency
+    load_dotenv = None
+
+if load_dotenv is not None:
+    load_dotenv()
+
+from gemini_client import GeminiRephraser, QueryExpansion
 from semantic_search import STOPWORDS, SemanticSearchEngine
 
 
@@ -39,18 +47,48 @@ class AcademicFAQChatbot:
     """Academic FAQ chatbot powered by a semantic search engine."""
 
     def __init__(self) -> None:
-        self.search_engine = SemanticSearchEngine(embedding_backend="gemini")
+        import logging
+        self.logger = logging.getLogger(__name__)
+
+        self.logger.info("Initializing AcademicFAQChatbot")
+
+        try:
+            self.search_engine = SemanticSearchEngine(embedding_backend="gemini")
+            self.logger.info("Search engine initialized")
+        except Exception as e:
+            self.logger.error("Failed to initialize search engine: %s", e)
+            raise
+
         self.is_trained = False
 
-        self.rephraser = GeminiRephraser()
+        try:
+            self.rephraser = GeminiRephraser()
+            self.logger.info("Rephraser initialized (available: %s)", self.rephraser.is_available())
+        except Exception as e:
+            self.logger.error("Failed to initialize rephraser: %s", e)
+            raise
 
         if os.path.exists("models/academic_faq.faiss"):
-            self.is_trained = self.search_engine.load_index("models/academic_faq")
-            if self.is_trained and self.search_engine.embedding_backend != "gemini":
-                print(
-                    "⚠️  Loaded knowledge base was built without Gemini embeddings. "
-                    "Rebuild with `python knowledge_base_builder.py --embedding-backend gemini` for best results."
-                )
+            self.logger.info("Found knowledge base files, loading")
+            try:
+                self.is_trained = self.search_engine.load_index("models/academic_faq")
+                self.logger.info("Knowledge base loaded. Is trained: %s", self.is_trained)
+                if self.is_trained and self.search_engine.embedding_backend != "gemini":
+                    self.logger.warning(
+                        "Loaded knowledge base was built without Gemini embeddings. "
+                        "Rebuild with `python knowledge_base_builder.py --embedding-backend gemini` for best results."
+                    )
+            except Exception as e:
+                self.logger.error("Failed to load knowledge base: %s", e)
+                raise
+        else:
+            self.logger.warning("Knowledge base not found at models/academic_faq.faiss")
+
+        try:
+            self.logger.info("Warming up embedding models and reranker")
+            self.search_engine.preload_models()
+        except Exception as exc:
+            self.logger.warning("Warm-up skipped: %s", exc)
 
         self.greetings: List[str] = [
             "hello",
@@ -75,11 +113,11 @@ class AcademicFAQChatbot:
 
     def is_greeting(self, query: str) -> bool:
         """Check if query is a greeting."""
-        return any(greeting in query.lower() for greeting in self.greetings)
+        return self._contains_phrase(query, self.greetings)
 
     def is_farewell(self, query: str) -> bool:
         """Check if query is a farewell."""
-        return any(farewell in query.lower() for farewell in self.farewells)
+        return self._contains_phrase(query, self.farewells)
 
     def generate_response(self, query: str) -> str:
         """Generate response based on user query."""
@@ -107,6 +145,22 @@ class AcademicFAQChatbot:
             )
 
         expanded_query, expanded_terms = self._expand_query(processed_query)
+        intent_hint: Optional[str] = None
+
+        llm_expansion = self._expand_query_with_gemini(processed_query)
+        if llm_expansion:
+            for term in llm_expansion.focus_terms:
+                cleaned = term.strip()
+                if cleaned:
+                    expanded_terms.add(cleaned.lower())
+
+            extra_queries = [item for item in llm_expansion.search_queries if item]
+            if extra_queries:
+                expansion_text = " ".join(extra_queries)
+                expanded_query = f"{expanded_query} {expansion_text}".strip()
+
+            if llm_expansion.intent:
+                intent_hint = llm_expansion.intent
 
         results = self.search_engine.search(expanded_query, top_k=8)
 
@@ -119,6 +173,9 @@ class AcademicFAQChatbot:
             if lexical_results:
                 results = lexical_results
             else:
+                direct_answer = self._answer_directly_with_gemini(query, intent_hint)
+                if direct_answer:
+                    return direct_answer
                 return (
                     "After reviewing the handbook, I couldn't locate a dedicated section on that topic. "
                     "Please connect with the academic office for the latest guidance, and I can help search the handbook with different wording if you'd like."
@@ -130,7 +187,8 @@ class AcademicFAQChatbot:
             max_sentences=4,
         )
 
-        if not self.rephraser.is_available():
+        use_rephraser = self.rephraser.is_available()
+        if not use_rephraser:
             return self._gemini_required_message()
 
         presentable_response = self._compose_presentable_answer(
@@ -139,9 +197,16 @@ class AcademicFAQChatbot:
             sentence_hits,
             results,
             expanded_terms,
+            use_rephraser=True,
+            intent_hint=intent_hint,
         )
+
         if presentable_response:
             return presentable_response
+
+        direct_answer = self._answer_directly_with_gemini(query, intent_hint)
+        if direct_answer:
+            return direct_answer
 
         return self._gemini_required_message()
 
@@ -154,6 +219,20 @@ class AcademicFAQChatbot:
 
     # ------------------------------------------------------------------
     # Helper methods
+    def _contains_phrase(self, text: str, phrases: List[str]) -> bool:
+        normalized = text.lower()
+        tokens = set(re.findall(r"\b\w+\b", normalized))
+
+        for phrase in phrases:
+            lowered = phrase.lower()
+            if " " in lowered:
+                if lowered in normalized:
+                    return True
+            elif lowered in tokens:
+                return True
+
+        return False
+
     def _expand_query(self, query: str) -> tuple[str, Set[str]]:
         tokens = self._extract_tokens(query)
         expanded_terms: Set[str] = set()
@@ -173,6 +252,21 @@ class AcademicFAQChatbot:
             expanded_query = query
 
         return expanded_query, term_set
+
+    def _expand_query_with_gemini(self, query: str) -> Optional[QueryExpansion]:
+        if not self.rephraser.is_available():
+            return None
+
+        try:
+            expansion = self.rephraser.expand_query(query)
+        except Exception as exc:  # pragma: no cover - defensive logging
+            self.logger.debug(f"Gemini query expansion failed: {exc}")
+            return None
+
+        if not isinstance(expansion, QueryExpansion):
+            return None
+
+        return expansion
 
     @staticmethod
     def _extract_tokens(text: str) -> Set[str]:
@@ -198,6 +292,8 @@ class AcademicFAQChatbot:
         sentence_hits: List[Dict[str, Any]],
         results: List[Dict[str, Any]],
         expanded_terms: Set[str],
+        *,
+        use_rephraser: bool,
     ) -> str:
         query_tokens = self._extract_tokens(processed_query)
         query_tokens.update({term.lower() for term in expanded_terms if len(term) > 2})
@@ -223,7 +319,12 @@ class AcademicFAQChatbot:
         if not sentences:
             return ""
 
-        return self._format_presentable_answer(raw_query, sentences, results)
+        return self._format_presentable_answer(
+            raw_query,
+            sentences,
+            results,
+            use_rephraser=use_rephraser,
+        )
 
     def _gather_sentences_from_hits(
         self,
@@ -272,7 +373,7 @@ class AcademicFAQChatbot:
 
             for sentence in self._split_into_sentences(text):
                 stripped = sentence.strip()
-                if len(stripped) < 40 or len(stripped) > 400:
+                if len(stripped) < 24 or len(stripped) > 480:
                     continue
 
                 score = base_score + self._score_sentence(stripped, query_tokens)
@@ -304,8 +405,11 @@ class AcademicFAQChatbot:
         raw_query: str,
         sentences: List[Dict[str, Any]],
         results: List[Dict[str, Any]],
+        *,
+        use_rephraser: bool,
+        intent_hint: Optional[str] = None,
     ) -> str:
-        intro = self._build_intro(raw_query)
+        intro = self._build_intro(raw_query, intent_hint)
         question_type = self._get_question_type(raw_query)
         topic_phrase = self._derive_topic_phrase(raw_query)
 
@@ -326,9 +430,15 @@ class AcademicFAQChatbot:
             if first_sentence:
                 formatted_points = [self._clean_sentence(first_sentence)]
 
+        def _trim_snippet(text: str, limit: int = 800) -> str:
+            cleaned = str(text).strip()
+            if len(cleaned) > limit:
+                return cleaned[: limit - 3].rstrip() + "..."
+            return cleaned
+
         chunk_snippets = [
             {
-                "text": str(result.get("text", "")),
+                "text": _trim_snippet(result.get("text", "")),
                 "source": self._format_source_label(result.get("metadata", {})),
             }
             for result in results
@@ -336,21 +446,41 @@ class AcademicFAQChatbot:
         ]
         sentence_snippets = [
             {
-                "text": str(entry.get("sentence", "")),
+                "text": _trim_snippet(entry.get("sentence", ""), limit=400),
                 "source": self._format_source_label(entry.get("metadata", {})),
             }
             for entry in sentences
             if str(entry.get("sentence", "")).strip()
         ]
-        snippets_for_llm = chunk_snippets or sentence_snippets
+
+        snippets_for_llm: List[Dict[str, str]] = []
+        if sentence_snippets:
+            snippets_for_llm.extend(sentence_snippets[:6])
+        if chunk_snippets and len(snippets_for_llm) < 3:
+            needed = 6 - len(snippets_for_llm)
+            snippets_for_llm.extend(chunk_snippets[: max(needed, 3)])
+        if not snippets_for_llm:
+            snippets_for_llm = chunk_snippets or sentence_snippets
 
         llm_answer: Optional[str] = None
-        llm_answer = self.rephraser.compose_answer(raw_query, snippets_for_llm)
-        if not llm_answer:
-            llm_answer = self.rephraser.rephrase(raw_query, formatted_points)
+        if use_rephraser and self.rephraser.is_available():
+            llm_answer = self.rephraser.compose_answer(
+                raw_query,
+                snippets_for_llm,
+                intent_hint=intent_hint,
+            )
+            if not llm_answer:
+                llm_answer = self.rephraser.rephrase(
+                    raw_query,
+                    formatted_points,
+                    intent_hint=intent_hint,
+                )
 
         if llm_answer:
-            return llm_answer
+            return self._deduplicate_text(llm_answer)
+
+        if use_rephraser:
+            return ""
 
         fallback_points = formatted_points or [self._clean_sentence(str(sentences[0].get("sentence", "")))]
         fallback_points = [point for point in fallback_points if point]
@@ -363,16 +493,51 @@ class AcademicFAQChatbot:
             bullets = "\n".join(f"- {point}" for point in fallback_points)
             fallback_sections.append(bullets)
 
-        source_labels = sorted({snippet["source"] for snippet in sentence_snippets if snippet.get("source")})
+        source_labels: List[str] = []
+        for entry in sentences:
+            label = self._format_source_label(entry.get("metadata", {}))
+            if label:
+                source_labels.append(label)
+
+        if not source_labels:
+            for result in results:
+                label = self._format_source_label(result.get("metadata", {}))
+                if label:
+                    source_labels.append(label)
+
         if source_labels:
-            fallback_sections.append("Sources: " + "; ".join(source_labels))
+            ordered_sources: List[str] = []
+            for label in source_labels:
+                if label not in ordered_sources:
+                    ordered_sources.append(label)
+            fallback_sections.append("Sources: " + ", ".join(ordered_sources))
 
         fallback_text = "\n\n".join(section.strip() for section in fallback_sections if section.strip())
+        fallback_text = self._deduplicate_text(fallback_text)
 
         if fallback_text:
             return fallback_text
 
-        return self._gemini_required_message()
+        return ""
+
+    def _answer_directly_with_gemini(
+        self,
+        raw_query: str,
+        intent_hint: Optional[str],
+    ) -> Optional[str]:
+        if not self.rephraser.is_available():
+            return None
+
+        try:
+            direct = self.rephraser.answer_without_context(raw_query, intent_hint=intent_hint)
+        except Exception as exc:  # pragma: no cover - defensive logging
+            self.logger.debug(f"Gemini direct answer failed: {exc}")
+            return None
+
+        if not direct:
+            return None
+
+        return self._deduplicate_text(direct)
 
     def _format_source_label(self, metadata: Dict[str, Any]) -> str:
         if not metadata:
@@ -410,11 +575,13 @@ class AcademicFAQChatbot:
         length_penalty = len(sentence) / 250
         return token_matches - length_penalty
 
-    def _build_intro(self, raw_query: str) -> str:
+    def _build_intro(self, raw_query: str, intent_hint: Optional[str] = None) -> str:
         cleaned = raw_query.strip() or "your question"
         cleaned = cleaned.rstrip("?!.")
         if not cleaned:
             cleaned = "your question"
+        if intent_hint:
+            return f"Here's what the handbook clarifies about {intent_hint.lower()}:"
         return f"Here's what the handbook clarifies about \"{cleaned}\":"
 
     @staticmethod
@@ -509,6 +676,32 @@ class AcademicFAQChatbot:
     @staticmethod
     def _split_into_sentences(text: str) -> List[str]:
         return [segment for segment in re.split(r"(?<=[.!?])\s+", text) if segment.strip()]
+
+    @staticmethod
+    def _deduplicate_text(text: str) -> str:
+        if not text:
+            return ""
+
+        lines = text.splitlines()
+        seen: Set[str] = set()
+        deduped: List[str] = []
+
+        for line in lines:
+            if not line.strip():
+                if deduped and deduped[-1] != "":
+                    deduped.append("")
+                continue
+
+            normalized = re.sub(r"\s+", " ", line.strip()).lower()
+            if normalized in seen:
+                continue
+            seen.add(normalized)
+            deduped.append(line.rstrip())
+
+        while deduped and not deduped[-1].strip():
+            deduped.pop()
+
+        return "\n".join(deduped).strip()
 
 
 __all__ = ["AcademicFAQChatbot"]

@@ -182,7 +182,7 @@ class DocumentProcessor:
                 )
                 print(f"  Added {len(chunks)} chunks")
         elif include_urls and urls_file:
-            print(f"⚠️  URLs file not found: {urls_file}")
+            print(f"Warning: URLs file not found: {urls_file}")
 
         return all_chunks
 

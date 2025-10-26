@@ -18,6 +18,7 @@ A premium AI-powered academic assistant that provides instant answers to academi
 - **Semantic retrieval** — Sentence-Transformers embeddings with a FAISS index deliver fast, high-quality matches.
 - **Contextual answers** — Returns the most relevant handbook sentences with inline citations so students see the original source instantly.
 - **Optional Gemini summarisation** — With a Google Gemini API key, the assistant asks Gemini to synthesise the retrieved snippets into concise, source-cited summaries tailored to each question.
+- **Gemini fallback answers** — When the handbook lacks coverage, the assistant escalates directly to Gemini for a carefully framed best-effort reply that includes next-step guidance.
 - **Gemini-powered retrieval (optional)** — Swap the embedding backend to Gemini's `text-embedding-004` model for a deeper semantic understanding of your PDFs.
 - **Smart reranking** — Cross-encoder re-ranking plus a lexical fallback ensure low-confidence queries (like "financial aid") still surface the best-matching handbook snippets instead of generic fallbacks.
 - **Conversational UX** — Flask-powered web app with chat history, metrics, and guardrails for greetings and farewells.
@@ -264,7 +265,7 @@ Level up answer fluency by letting Google Gemini rewrite the curated bullet poin
 
 4. Start the chatbot as usual. When the key is present, Gemini will synthesise the retrieved snippets into a concise, source-cited answer while strictly staying within the retrieved facts. Pair it with the (default) Gemini embedding backend to have Gemini handle both retrieval and final wording.
 
-If the key is missing or the API call fails, the chatbot automatically reverts to its bullet-point presentation, so reliability is unaffected. Similarly, the knowledge-base builder falls back to sentence-transformer embeddings whenever the Gemini API is unavailable, ensuring the pipeline still completes.
+If the key is missing or the API call fails, the chatbot automatically reverts to its bullet-point presentation, so reliability is unaffected. When Gemini is available but the handbook has no relevant passages, the bot now offers a best-effort Gemini-authored reply that gently signposts students to official offices. Similarly, the knowledge-base builder falls back to sentence-transformer embeddings whenever the Gemini API is unavailable, ensuring the pipeline still completes.
 
 ---
 

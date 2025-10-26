@@ -24,8 +24,8 @@ python -c "import google.generativeai; print('✅ Google Generative AI installed
 export HF_HOME="${PWD}/.cache/huggingface"
 mkdir -p "$HF_HOME"
 python - <<'PY'
-from sentence_transformers import SentenceTransformer, CrossEncoder
-SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+from sentence_transformers import CrossEncoder
+
 try:
     CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
 except Exception as exc:  # pragma: no cover - informational logging only
