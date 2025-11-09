@@ -1,4 +1,4 @@
-"""Flask server for the Academic FAQ Chatbot."""
+"""Flask server for the Financial Guidance Chatbot."""
 
 from __future__ import annotations
 
@@ -16,6 +16,13 @@ if load_dotenv is not None:
 from flask import Flask, render_template, request, jsonify, send_from_directory
 from flask_cors import CORS
 
+from chatbot import FinancialAdvisorChatbot
+
+
+KNOWLEDGE_BASE_STEMS = [
+    "models/financial_advisor",
+    "models/academic_faq",
+]
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -46,13 +53,12 @@ logger.info("Initializing chatbot in Flask app")
 chatbot = None
 
 try:
-    from chatbot import AcademicFAQChatbot
-    chatbot = AcademicFAQChatbot()
+    chatbot = FinancialAdvisorChatbot()
     logger.info("Chatbot initialized. Is trained: %s", chatbot.is_trained)
     if chatbot.is_trained:
         logger.info("Chatbot ready with %s documents", len(chatbot.search_engine.documents))
     else:
-        logger.warning("Chatbot not trained - knowledge base not found")
+        logger.warning("Chatbot not trained - financial knowledge base not found")
 except ImportError as e:
     logger.error("Failed to import chatbot module: %s", e)
     import traceback
@@ -113,8 +119,8 @@ def chat():
         if not chatbot.is_trained:
             logger.error("Chatbot is not trained")
             return jsonify({
-                'error': 'Knowledge base not loaded. Please run knowledge_base_builder.py first.',
-                'details': 'The chatbot needs a trained knowledge base to answer questions.'
+                'error': 'Financial knowledge base not loaded. Please run knowledge_base_builder.py first.',
+                'details': 'The chatbot needs a trained financial knowledge base to answer questions.'
             }), 500
         
         response = chatbot.generate_response(question)
@@ -140,7 +146,7 @@ def health():
     """Health check endpoint for monitoring services."""
     return jsonify({
         'status': 'healthy',
-        'service': 'Academic FAQ Chatbot',
+        'service': 'Financial Guidance Chatbot',
         'version': '1.0.0'
     }), 200
 
@@ -150,13 +156,20 @@ def status():
     """Get chatbot status."""
     try:
         import os
-        faiss_exists = os.path.exists("models/academic_faq.faiss")
-        pkl_exists = os.path.exists("models/academic_faq_data.pkl")
+        kb_status = [
+            {
+                'stem': stem,
+                'faiss_exists': os.path.exists(f"{stem}.faiss"),
+                'pkl_exists': os.path.exists(f"{stem}_data.pkl"),
+            }
+            for stem in KNOWLEDGE_BASE_STEMS
+        ]
+        faiss_exists = any(entry['faiss_exists'] for entry in kb_status)
+        pkl_exists = any(entry['pkl_exists'] for entry in kb_status)
         
         logger.info(
-            "Status check - FAISS exists: %s, PKL exists: %s",
-            faiss_exists,
-            pkl_exists,
+            "Status check - knowledge base files: %s",
+            kb_status,
         )
         logger.info("Status check - Chatbot is None: %s", chatbot is None)
         if chatbot is not None:
@@ -171,6 +184,7 @@ def status():
                 'debug_info': {
                     'faiss_file_exists': faiss_exists,
                     'pkl_file_exists': pkl_exists,
+                    'knowledge_bases': kb_status,
                     'working_directory': os.getcwd(),
                     'documents_count': 0,
                     'python_version': sys.version,
@@ -180,11 +194,12 @@ def status():
         
         return jsonify({
             'is_trained': chatbot.is_trained,
-            'stats': chatbot.get_stats() if chatbot.is_trained else 'Knowledge base not loaded',
+            'stats': chatbot.get_stats() if chatbot.is_trained else 'Financial knowledge base not loaded',
             'embedding_backend': chatbot.search_engine.embedding_backend if chatbot.is_trained else 'N/A',
             'debug_info': {
                 'faiss_file_exists': faiss_exists,
                 'pkl_file_exists': pkl_exists,
+                'knowledge_bases': kb_status,
                 'working_directory': os.getcwd(),
                 'documents_count': len(chatbot.search_engine.documents) if chatbot.is_trained else 0,
                 'python_version': sys.version,

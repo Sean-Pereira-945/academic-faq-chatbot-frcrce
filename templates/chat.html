@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat - Academic FAQ Chatbot</title>
+    <title>Chat - FinGuide Chatbot</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/chat.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
@@ -14,8 +14,8 @@
     <nav class="navbar">
         <div class="nav-container">
             <a href="/" class="logo">
-                <span class="logo-icon">🎓</span>
-                <span class="logo-text">AcademicAI</span>
+                <span class="logo-icon">💰</span>
+                <span class="logo-text">FinGuide</span>
             </a>
             <div class="nav-right">
                 <div class="status-indicator">
@@ -59,7 +59,7 @@
                     <div class="info-icon">ℹ️</div>
                     <div class="info-text">
                         <strong>Quick Tips</strong>
-                        <p>Ask about academic policies, deadlines, registration, or library hours.</p>
+                        <p>Ask about budgeting, investing, credit scores, or tax deadlines.</p>
                     </div>
                 </div>
                 <div class="quick-actions">
@@ -91,12 +91,12 @@
                         </div>
                         <div class="message-content">
                             <div class="message-header">
-                                <span class="message-sender">AcademicAI Assistant</span>
+                                <span class="message-sender">FinGuide Assistant</span>
                                 <span class="message-time"></span>
                             </div>
                             <div class="message-text">
-                                <p>Hello! I'm your Academic FAQ Assistant. I can help you with questions about academic policies, deadlines, course registration, and university procedures.</p>
-                                <p>What would you like to know?</p>
+                                <p>Hello! I'm your AI finance coach. I can help you budget smarter, compare investing options, understand credit, and plan for taxes.</p>
+                                <p>What money question is on your mind?</p>
                             </div>
                         </div>
                     </div>
@@ -106,10 +106,10 @@
                 <div class="suggestions">
                     <div class="suggestions-title">Try asking:</div>
                     <div class="suggestions-grid">
-                        <button class="suggestion-chip">What are the library hours?</button>
-                        <button class="suggestion-chip">When is the registration deadline?</button>
-                        <button class="suggestion-chip">How do I drop a course?</button>
-                        <button class="suggestion-chip">What is the refund policy?</button>
+                        <button class="suggestion-chip">How much should I keep in an emergency fund?</button>
+                        <button class="suggestion-chip">What is the best way to pay off credit card debt?</button>
+                        <button class="suggestion-chip">How do index funds work?</button>
+                        <button class="suggestion-chip">What tax documents do I need for filing?</button>
                     </div>
                 </div>
             </div>
@@ -132,7 +132,7 @@
                     <textarea 
                         id="messageInput" 
                         class="message-input" 
-                        placeholder="Ask your academic question here..."
+                        placeholder="Ask your money question here..."
                         rows="1"
                     ></textarea>
                     <button class="send-button" id="sendButton" disabled>

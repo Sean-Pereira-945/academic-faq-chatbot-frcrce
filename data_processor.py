@@ -1,4 +1,4 @@
-"""Data processing utilities for the Academic FAQ chatbot."""
+"""Data processing utilities for the FinGuide chatbot."""
 
 import os
 import re

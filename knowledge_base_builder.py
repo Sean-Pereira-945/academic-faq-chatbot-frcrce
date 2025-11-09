@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Knowledge base builder for the Academic FAQ Chatbot."""
+"""Knowledge base builder for the Financial Guidance Chatbot."""
 
 import argparse
 import os
@@ -13,7 +13,7 @@ except ImportError:  # pragma: no cover - optional dependency
 if load_dotenv is not None:
     load_dotenv()
 
-from chatbot import AcademicFAQChatbot
+from chatbot import FinancialAdvisorChatbot
 from data_processor import DocumentProcessor
 from semantic_search import SemanticSearchEngine
 
@@ -93,21 +93,21 @@ def _ensure_urls_placeholder(urls_file: str) -> None:
 
     os.makedirs(os.path.dirname(urls_file) or ".", exist_ok=True)
     with open(urls_file, "w", encoding="utf-8") as file:
-        file.write("# Add your university URLs here, one per line\n")
+        file.write("# Add your trusted finance URLs here, one per line\n")
         file.write("# Example:\n")
-        file.write("# https://university.edu/faq\n")
-        file.write("# https://university.edu/academic-calendar\n")
+        file.write("# https://www.investor.gov/\n")
+        file.write("# https://www.consumerfinance.gov/\n")
     print(f"Created {urls_file} - please add your URLs there")
 
 
-def _answer_questions(bot: AcademicFAQChatbot, questions: Iterable[str]) -> None:
+def _answer_questions(bot: FinancialAdvisorChatbot, questions: Iterable[str]) -> None:
     for question in questions:
         print("\nQuestion:", question)
         answer = bot.generate_response(question)
         print("\n" + answer + "\n")
 
 
-def _interactive_loop(bot: AcademicFAQChatbot) -> None:
+def _interactive_loop(bot: FinancialAdvisorChatbot) -> None:
     print("\nEntering interactive mode. Type 'exit' or press Ctrl+C to stop.\n")
     try:
         while True:
@@ -124,7 +124,7 @@ def _interactive_loop(bot: AcademicFAQChatbot) -> None:
 def main():
     """Entry point for building the semantic knowledge base."""
     args = _parse_arguments()
-    print("Academic FAQ Chatbot - Knowledge Base Builder")
+    print("Financial Guidance Chatbot - Knowledge Base Builder")
     print("=" * 60)
 
     # Initialize components
@@ -161,18 +161,19 @@ def main():
     # Save knowledge base
     models_dir = "models"
     os.makedirs(models_dir, exist_ok=True)
-    search_engine.save_index("models/academic_faq")
+    target_stem = "models/financial_advisor"
+    search_engine.save_index(target_stem)
 
     print("Knowledge base building completed!")
     print("Summary:")
     print(f"  - Total text chunks: {len(all_chunks)}")
     print("  - Embedding backend:", search_engine.embedding_backend.upper())
-    print("  - Model saved to: models/academic_faq")
+    print("  - Model saved to: models/financial_advisor")
     print("  - Ready for Phase 3: Core Application Development")
 
     pending_questions = _collect_questions(args)
     if pending_questions or args.interactive:
-        bot = AcademicFAQChatbot()
+        bot = FinancialAdvisorChatbot()
         bot.search_engine = search_engine
         bot.is_trained = True
 

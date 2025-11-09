@@ -1,10 +1,10 @@
-"""Core chatbot logic for the Academic FAQ assistant."""
+"""Core chatbot logic for the Financial Guidance assistant."""
 
 from __future__ import annotations
 
 import os
 import re
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 try:
     from dotenv import load_dotenv
@@ -19,38 +19,42 @@ from semantic_search import STOPWORDS, SemanticSearchEngine
 
 
 SYNONYM_MAP: Dict[str, Set[str]] = {
-    "financial aid": {"scholarship", "tuition assistance", "fafsa", "aid"},
-    "scholarship": {"financial aid", "tuition assistance"},
-    "aid": {"financial aid"},
-    "drop a course": {"withdraw", "course withdrawal", "withdraw from a class"},
-    "drop": {"withdraw"},
-    "withdraw": {"drop", "course withdrawal"},
-    "register": {"enroll", "registration"},
-    "registration": {"enroll", "course sign up"},
-    "academic calendar": {"term dates", "important dates", "schedule"},
-    "advisor": {"counselor", "academic advisor"},
-    "academic advisor": {"counselor", "advisor"},
-    "counselor": {"advisor"},
-    "library": {"media center", "learning commons"},
-    "library hours": {"library schedule", "media center hours"},
-    "health services": {"wellness", "nurse", "medical services"},
-    "health": {"wellness"},
-    "student id": {"identification card", "id card", "school id"},
-    "parking": {"vehicle parking", "car parking", "student parking"},
-    "refund": {"tuition refund", "reimbursement"},
-    "exam": {"assessment", "test"},
-    "transcript": {"academic record", "official record"},
+    "interest rate": {"apr", "borrowing cost", "rate"},
+    "loan": {"credit", "financing", "borrow"},
+    "mortgage": {"home loan", "housing finance"},
+    "investment": {"portfolio", "invest", "assets"},
+    "retirement": {"401k", "pension", "superannuation"},
+    "credit card": {"card", "revolving credit", "plastic"},
+    "savings": {"deposit", "emergency fund", "cash reserve"},
+    "budget": {"spending plan", "cash flow", "expenses"},
+    "insurance": {"coverage", "policy", "premium"},
+    "tax": {"taxes", "taxation", "irs"},
+    "stock market": {"equities", "shares", "markets"},
+    "mutual fund": {"mf", "investment fund"},
+    "certificate of deposit": {"cd", "fixed deposit"},
+    "emergency fund": {"rainy day fund", "safety net"},
+    "credit score": {"fico", "credit history"},
+    "debt": {"liability", "obligation"},
+    "capital gains": {"investment gains", "realised profit"},
+    "dividend": {"payout", "distribution"},
+    "financial advisor": {"planner", "wealth manager"},
+    "estate planning": {"will", "inheritance", "trust"},
 }
 
+INDEX_STEMS: Tuple[str, ...] = (
+    "models/financial_advisor",
+    "models/academic_faq",
+)
 
-class AcademicFAQChatbot:
-    """Academic FAQ chatbot powered by a semantic search engine."""
+
+class FinancialAdvisorChatbot:
+    """Provide financial guidance by searching curated resources."""
 
     def __init__(self) -> None:
         import logging
         self.logger = logging.getLogger(__name__)
 
-        self.logger.info("Initializing AcademicFAQChatbot")
+        self.logger.info("Initializing FinancialAdvisorChatbot")
 
         try:
             self.search_engine = SemanticSearchEngine(embedding_backend="gemini")
@@ -60,6 +64,7 @@ class AcademicFAQChatbot:
             raise
             
         self.is_trained = False
+        self.index_stem: Optional[str] = None
 
         try:
             self.rephraser = GeminiRephraser()
@@ -68,21 +73,26 @@ class AcademicFAQChatbot:
             self.logger.error("Failed to initialize rephraser: %s", e)
             raise
 
-        if os.path.exists("models/academic_faq.faiss"):
-            self.logger.info("Found knowledge base files, loading")
+        for stem in INDEX_STEMS:
+            faiss_path = f"{stem}.faiss"
+            if not os.path.exists(faiss_path):
+                continue
+
+            self.logger.info("Found knowledge base candidate at %s", faiss_path)
             try:
-                self.is_trained = self.search_engine.load_index("models/academic_faq")
-                self.logger.info("Knowledge base loaded. Is trained: %s", self.is_trained)
-                if self.is_trained and self.search_engine.embedding_backend != "gemini":
-                    self.logger.warning(
-                        "Loaded knowledge base was built without Gemini embeddings. "
-                        "Rebuild with `python knowledge_base_builder.py --embedding-backend gemini` for best results."
-                    )
+                if self.search_engine.load_index(stem):
+                    self.is_trained = True
+                    self.index_stem = stem
+                    self.logger.info("Knowledge base loaded from %s", stem)
+                    break
             except Exception as e:
-                self.logger.error("Failed to load knowledge base: %s", e)
+                self.logger.error("Failed to load knowledge base from %s: %s", stem, e)
                 raise
-        else:
-            self.logger.warning("Knowledge base not found at models/academic_faq.faiss")
+
+        if not self.is_trained:
+            self.logger.warning(
+                "Knowledge base not found. Build it with `python knowledge_base_builder.py` to unlock financial answers."
+            )
 
         try:
             self.logger.info("Warming up embedding models and reranker")
@@ -122,27 +132,35 @@ class AcademicFAQChatbot:
     def generate_response(self, query: str) -> str:
         """Generate response based on user query."""
         if not query or len(query.strip()) < 2:
-            return "Please ask a specific question about academic policies or procedures."
+            return "Please ask a specific question about your finances or money decisions."
 
         processed_query = self.preprocess_query(query)
 
         if self.is_greeting(processed_query):
             return (
-                "Hello! I'm your Academic FAQ Assistant. I can help you with questions about academic policies, "
-                "deadlines, course registration, and university procedures. What would you like to know?"
+                "Hello! I'm your personal finance assistant. Ask me about saving, investing, credit, taxes, or any"
+                " money goal you're working on. How can I help today?"
             )
 
         if self.is_farewell(processed_query):
             return (
-                "Thank you for using the Academic FAQ Assistant! Feel free to ask me any academic questions anytime. "
-                "Have a great day!"
+                "Thanks for chatting about your finances! If more money questions pop up, I'm here 24/7."
             )
 
         if not self.is_trained:
-            return (
-                "I'm still learning! The knowledge base hasn't been built yet. "
-                "Please run the knowledge_base_builder.py script first."
+            kb_message = (
+                "I'm still building your financial knowledge base. Please run knowledge_base_builder.py so I can"
+                " provide tailored answers from your documents and bookmarked sites."
             )
+
+            direct_answer = self._answer_directly_with_gemini(query, intent_hint=None)
+            if direct_answer:
+                return (
+                    f"{kb_message}\n\nIn the meantime, here's what Gemini suggests based on your question:\n\n"
+                    f"{direct_answer}"
+                )
+
+            return kb_message
 
         expanded_query, expanded_terms = self._expand_query(processed_query)
         intent_hint: Optional[str] = None
@@ -177,8 +195,8 @@ class AcademicFAQChatbot:
                 if direct_answer:
                     return direct_answer
                 return (
-                    "After reviewing the handbook, I couldn't locate a dedicated section on that topic. "
-                    "Please connect with the academic office for the latest guidance, and I can help search the handbook with different wording if you'd like."
+                    "I couldn't find a clear answer in your financial documents. "
+                    "Consider reaching out to a licensed advisor for personalised guidance, and I can keep searching if you share more details."
                 )
 
         sentence_hits = self.search_engine.extract_relevant_sentences(
@@ -213,9 +231,9 @@ class AcademicFAQChatbot:
     def get_stats(self) -> str:
         """Get chatbot statistics."""
         if not self.is_trained:
-            return "Knowledge base not loaded"
+            return "Financial knowledge base not loaded"
 
-        return f"Knowledge base contains {len(self.search_engine.documents)} text chunks"
+        return f"Financial knowledge base contains {len(self.search_engine.documents)} text chunks"
 
     # ------------------------------------------------------------------
     # Helper methods
@@ -542,7 +560,7 @@ class AcademicFAQChatbot:
 
     def _format_source_label(self, metadata: Dict[str, Any]) -> str:
         if not metadata:
-            return "Academic handbook"
+            return "Financial reference"
 
         source = metadata.get("source")
         if source:
@@ -557,7 +575,7 @@ class AcademicFAQChatbot:
         if document:
             return str(document)
 
-        return "Academic handbook"
+        return "Financial reference"
 
     @staticmethod
     def _gemini_required_message() -> str:
@@ -582,8 +600,8 @@ class AcademicFAQChatbot:
         if not cleaned:
             cleaned = "your question"
         if intent_hint:
-            return f"Here's what the handbook clarifies about {intent_hint.lower()}:"
-        return f"Here's what the handbook clarifies about \"{cleaned}\":"
+            return f"Here's what your financial knowledge base highlights about {intent_hint.lower()}:"
+        return f"Here's what your financial knowledge base highlights about \"{cleaned}\":"
 
     @staticmethod
     def _get_question_type(raw_query: str) -> str:
@@ -662,9 +680,9 @@ class AcademicFAQChatbot:
         elif question_type == "what":
             prefix = f"Concerning {topic_text},"
         elif question_type == "yesno":
-            prefix = f"The handbook clarifies that"
+            prefix = "Our financial resources indicate that"
         else:
-            prefix = "It clarifies that"
+            prefix = "Our research shows that"
 
         if body:
             return f"{prefix} {body}."
@@ -707,4 +725,6 @@ class AcademicFAQChatbot:
         return "\n".join(deduped).strip()
 
 
-__all__ = ["AcademicFAQChatbot"]
+AcademicFAQChatbot = FinancialAdvisorChatbot
+
+__all__ = ["FinancialAdvisorChatbot", "AcademicFAQChatbot"]

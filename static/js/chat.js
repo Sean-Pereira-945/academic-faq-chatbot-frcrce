@@ -154,7 +154,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 <div class="message-content">
                     <div class="message-header">
-                        <span class="message-sender">${sender === 'user' ? 'You' : 'AcademicAI Assistant'}</span>
+                        <span class="message-sender">${sender === 'user' ? 'You' : 'FinGuide Assistant'}</span>
                         <span class="message-time">${timeString}</span>
                     </div>
                     <div class="message-text ${isError ? 'error-message' : ''}">
@@ -194,7 +194,7 @@ document.addEventListener('DOMContentLoaded', function() {
         text = text.replace(/\n/g, '<br>');
         
         // Convert source citations to styled elements
-        text = text.replace(/\[Source: (.*?)\]/g, '<span class="source-citation">📚 $1</span>');
+    text = text.replace(/\[Source: (.*?)\]/g, '<span class="source-citation">� $1</span>');
         
         return `<p>${text}</p>`;
     }
@@ -262,12 +262,12 @@ document.addEventListener('DOMContentLoaded', function() {
                             </div>
                             <div class="message-content">
                                 <div class="message-header">
-                                    <span class="message-sender">AcademicAI Assistant</span>
+                                    <span class="message-sender">FinGuide Assistant</span>
                                     <span class="message-time">${new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
                                 </div>
                                 <div class="message-text">
-                                    <p>Hello! I'm your Academic FAQ Assistant. I can help you with questions about academic policies, deadlines, course registration, and university procedures.</p>
-                                    <p>What would you like to know?</p>
+                                    <p>Hello! I'm your AI finance coach. I can help with budgeting strategies, investment basics, credit scores, and tax planning.</p>
+                                    <p>What money goal can I assist with?</p>
                                 </div>
                             </div>
                         </div>
@@ -275,10 +275,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="suggestions">
                         <div class="suggestions-title">Try asking:</div>
                         <div class="suggestions-grid">
-                            <button class="suggestion-chip">What are the library hours?</button>
-                            <button class="suggestion-chip">When is the registration deadline?</button>
-                            <button class="suggestion-chip">How do I drop a course?</button>
-                            <button class="suggestion-chip">What is the refund policy?</button>
+                            <button class="suggestion-chip">How much should I save each month?</button>
+                            <button class="suggestion-chip">What is a good credit score?</button>
+                            <button class="suggestion-chip">How can I start investing with $500?</button>
+                            <button class="suggestion-chip">Which expenses are tax deductible?</button>
                         </div>
                     </div>
                 `;

@@ -1,6 +1,6 @@
-# Academic FAQ Chatbot 🎓
+# FinGuide Chatbot 💰
 
-A premium AI-powered academic assistant that provides instant answers to academic policies, deadlines, course registration, and university procedures. Features a modern web interface with Flask backend and Google Gemini integration.
+An AI-powered personal finance assistant that delivers fast, trustworthy guidance on budgeting, investing, credit, insurance, and taxes. The project pairs a modern Flask web experience with Google Gemini embeddings, FAISS semantic search, and a curated corpus of financial resources.
 
 | Phase | Description | Status |
 | --- | --- | --- |
@@ -14,17 +14,14 @@ A premium AI-powered academic assistant that provides instant answers to academi
 
 ## 🔍 Key Features
 
-- **Hybrid knowledge base** — ingest PDFs and live web pages with consistent chunking and metadata tracking.
-- **Semantic retrieval** — Sentence-Transformers embeddings with a FAISS index deliver fast, high-quality matches.
-- **Contextual answers** — Returns the most relevant handbook sentences with inline citations so students see the original source instantly.
-- **Optional Gemini summarisation** — With a Google Gemini API key, the assistant asks Gemini to synthesise the retrieved snippets into concise, source-cited summaries tailored to each question.
-- **Gemini fallback answers** — When the handbook lacks coverage, the assistant escalates directly to Gemini for a carefully framed best-effort reply that includes next-step guidance.
-- **Gemini-powered retrieval (optional)** — Swap the embedding backend to Gemini's `text-embedding-004` model for a deeper semantic understanding of your PDFs.
-- **Smart reranking** — Cross-encoder re-ranking plus a lexical fallback ensure low-confidence queries (like "financial aid") still surface the best-matching handbook snippets instead of generic fallbacks.
-- **Conversational UX** — Flask-powered web app with chat history, metrics, and guardrails for greetings and farewells.
-- **Evaluation toolkit** — Automated response-time benchmarking, optional manual scoring, and exportable reports.
-- **Test coverage** — Unit tests for conversational logic plus a reusable smoke test harness.
-- **Compatibility shim** — Seamlessly supports recent `huggingface_hub` releases while honoring the pinned `sentence-transformers` version.
+- **Curated finance corpus** — ingest PDFs and live articles to build a trusted library of financial explainers, regulatory notices, and calculators.
+- **Gemini-powered retrieval** — Google Gemini embeddings (via `text-embedding-004`) fuel fast, high-quality semantic matches; FAISS handles vector search.
+- **Transparent answers** — Returns concise advice with inline source highlights so users can verify every recommendation.
+- **Flexible fallbacks** — When documents lack coverage, the assistant escalates to Gemini for a best-effort answer that still discloses uncertainty and next steps.
+- **Financial synonym expansion** — Budgeting, investing, credit, and tax terminology is expanded automatically to boost recall.
+- **Conversational UX** — Dark-themed Flask interface with welcome flows, suggestion chips, chat history, and export tools.
+- **Evaluation toolkit** — Scripts for latency checks, regression tests, and dataset-driven accuracy scoring.
+- **Test coverage** — Unit tests mock external services to keep the feedback loop fast.
 
 ---
 
@@ -51,25 +48,20 @@ python test_setup.py
 ```
 This script checks GPU/CPU availability, validates the Hugging Face compatibility shim, and confirms that required directories exist.
 
-### 3. Ingest your academic sources
-- Place PDFs under `data/pdfs/` (any depth; the loader walks subdirectories).
-- Add seed URLs to `data/urls.txt` (one per line). The builder auto-creates the file with guidance comments if missing.
+### 3. Ingest your financial sources
+- Place financial PDFs under `data/pdfs/` (any depth; the loader walks subdirectories).
+- Add seed URLs to `data/urls.txt` (one per line). The builder auto-creates the file with finance-focused guidance if missing.
 
 ### 4. Build the knowledge base
 ```cmd
 python knowledge_base_builder.py
 ```
 Outputs:
-- `models/academic_faq.faiss` — FAISS index
-- `models/academic_faq.pkl` — serialized metadata (embeddings + chunk store)
+- `models/financial_advisor.faiss` — FAISS index
+- `models/financial_advisor_data.pkl` — serialized metadata (embeddings + chunk store)
 - Console summary with processed chunk count
 
-Gemini embeddings are now the default. To fall back to the sentence-transformer backend (if you do not have an API key set), run:
-
-```cmd
-python knowledge_base_builder.py --embedding-backend sbert
-```
-Make sure `GEMINI_API_KEY` is set; otherwise the builder automatically falls back to the sentence-transformer backend with a warning.
+The builder uses Gemini embeddings by default. If the API key is missing, it falls back to the local sentence-transformer backend with a warning.
 
 ### 5. Launch the web application
 ```cmd
@@ -86,7 +78,7 @@ Visit http://localhost:5000 for the landing page or http://localhost:5000/chat t
 The application features a premium dark-themed interface with two main pages, served via Flask templates and vanilla JavaScript—no Streamlit runtime required:
 
 ### Landing Page (/)
-- Animated hero section with gradient text effects
+- Animated hero section that highlights savings goals, portfolios, and tax reminders
 - Floating information cards with smooth animations
 - Feature showcase grid
 - Technology stack overview
@@ -95,8 +87,7 @@ The application features a premium dark-themed interface with two main pages, se
 
 ### Chat Interface (/chat)
 - Real-time messaging with typing indicators
-- Message timestamps and avatars
-- Quick suggestion chips
+- Money-themed welcome flows and suggestion chips
 - Chat history sidebar
 - System status panel
 - Export conversation feature
@@ -155,14 +146,14 @@ Customize chunk size, overlap, or model choice by editing constants in `data_pro
 
 ## 💬 Using the Chatbot Programmatically
 ```python
-from chatbot import AcademicFAQChatbot
+from chatbot import FinancialAdvisorChatbot
 
-bot = AcademicFAQChatbot()
+bot = FinancialAdvisorChatbot()
 
 if not bot.is_trained:
 	 raise RuntimeError("Build the knowledge base first (python knowledge_base_builder.py)")
 
-print(bot.generate_response("How do I register for classes?"))
+print(bot.generate_response("How do index funds work?"))
 ```
 `generate_response` handles greetings, fallbacks, and confidence thresholds automatically. Use `get_stats()` to report chunk counts inside the web UI or custom dashboards.
 
@@ -174,7 +165,7 @@ print(bot.generate_response("How do I register for classes?"))
 ```cmd
 python evaluate.py
 ```
-- Runs a curated set of academic FAQs.
+- Runs a curated set of finance-focused questions.
 - Measures response latency, length, and fallback frequency.
 - Saves `evaluation_results_YYYYMMDD_HHMMSS.csv` and a matching `.json` in the working directory.
 - Pass `include_manual=True` within `run_full_evaluation` to record 1–5 relevance scores for a sample of queries.
@@ -194,7 +185,7 @@ Consider wiring these commands into CI (GitHub Actions, Azure DevOps, etc.) to e
 ## 🔧 Configuration Tips
 - **Model overrides**: Instantiate `SemanticSearchEngine(model_name="sentence-transformers/all-mpnet-base-v2")` for higher-quality embeddings (requires more resources).
 - **Chunk tuning**: Adjust `CHUNK_SIZE` and `CHUNK_OVERLAP` in `data_processor.py` to match document density.
-- **Index location**: Provide a custom path to `save_index`/`load_index` to version multiple knowledge bases (e.g., semester-specific indexes).
+- **Index location**: Provide a custom path to `save_index`/`load_index` to version multiple knowledge bases (e.g., retirement vs. debt payoff corpora).
 - **Proxy / offline mode**: Populate `data/web_pages/` with manually downloaded HTML to avoid outbound network calls; the processor skips fetching if cached files exist.
 - **Logging**: Toggle verbose logging in `semantic_search.py` to inspect FAISS operations when debugging.
 
@@ -223,7 +214,7 @@ Add the following in the Render dashboard (or copy/edit directly in `render.yaml
 | `RENDER` | ✅ | Set to `true` (provided in `render.yaml`) so the Flask app toggles production-specific behaviour. |
 
 ### 3. Knowledge base artifacts
-- If you commit `models/academic_faq.faiss` + `models/academic_faq_data.pkl`, Render will deploy them as-is.
+- If you commit `models/financial_advisor.faiss` + `models/financial_advisor_data.pkl`, Render will deploy them as-is.
 - If the files are absent, `build.sh` automatically rebuilds the index from PDFs located in `data/pdfs/` (URLs are skipped during the build to avoid long external fetches). Ensure any required PDFs live in the repo or are fetched at runtime.
 
 ### 4. Start command
@@ -272,7 +263,7 @@ If the key is missing or the API call fails, the chatbot automatically reverts t
 ## 🛠️ Troubleshooting
 | Issue | Resolution |
 | --- | --- |
-| `Academic FAQ Assistant` says the knowledge base isn't built | Run `python knowledge_base_builder.py` and confirm `models/academic_faq.faiss` exists. |
+| FinGuide says the knowledge base isn't built | Run `python knowledge_base_builder.py` and confirm `models/financial_advisor.faiss` exists. |
 | Flask app fails with `ModuleNotFoundError` | Verify virtual environment activation and rerun `pip install -r requirements.txt`. |
 | Hugging Face download failures behind a firewall | Pre-download the model and set the `HF_HOME` environment variable, or copy the `sentence-transformers` model into `models/`. |
 | Evaluation script halts waiting for input | Disable manual scoring by keeping `include_manual=False` (default). |
@@ -284,7 +275,7 @@ If the key is missing or the API call fails, the chatbot automatically reverts t
 - Add richer analytics in the chat sidebar (feedback capture, usage charts).
 - Add conversational memory or retrieval-augmented generation (RAG) summarization for multi-turn questions.
 - Integrate CI to automate `test_suite.py`, `evaluate.py`, and linting on pull requests.
-- Explore multi-tenant deployments (different academic departments or campuses).
+- Explore multi-tenant deployments (different financial coaching teams or customer segments).
 
 Contributions and feedback are welcome! Open an issue or submit a pull request detailing proposed enhancements.
 
@@ -298,4 +289,4 @@ Contributions and feedback are welcome! Open an issue or submit a pull request d
 
 ---
 
-Happy building! Empower your campus community with instant, trustworthy academic answers. 🎓
+Happy building! Empower your users with clear, confident financial guidance. 💰

@@ -3,6 +3,9 @@ chatbot_env/
 venv/
 env/
 academic-chatbot/chatbot_env/
+.tox/
+.nox/
+.python-version
 
 # Python Cache
 __pycache__/
@@ -10,6 +13,7 @@ __pycache__/
 *.pyo
 *.pyd
 .Python
+.pytest_cache/
 
 # Jupyter Notebooks
 .ipynb_checkpoints/
@@ -20,11 +24,36 @@ __pycache__/
 *.swp
 *.swo
 
+# Tooling Caches
+.mypy_cache/
+.ruff_cache/
+.cache/
+.benchmarks/
+
 # Model Files (large files)
 models/*.bin
 # NOTE: Keep knowledge base files for deployment
 # models/*.pkl
 # *.faiss
+
+# Build Artifacts
+dist/
+.dist/
+build/
+*.egg-info/
+*.eggs/
+
+# Coverage Reports
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# Node / Frontend
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
 
 # Data Files (potentially large)
 # NOTE: Keep PDFs for production rebuild if needed

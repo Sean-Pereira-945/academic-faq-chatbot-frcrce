@@ -1,37 +1,40 @@
-# Add your university URLs here, one per line
-# Example:
-# https://university.edu/faq
-# https://university.edu/academic-calendar
-https://frcrce.ac.in/index.php/admission/post-graduate
+# Curated finance knowledge URLs for the Finance Chatbot
 
-#councils 
-https://frcrce.ac.in/index.php/students/forums/nisp
-https://frcrce.ac.in/index.php/students/forums/tedxcrce
-https://frcrce.ac.in/index.php/students/forums/ecellcrce
-https://frcrce.ac.in/index.php/students/forums/ieeecrce
-https://frcrce.ac.in/index.php/students/forums/csicrce
-https://frcrce.ac.in/index.php/students/forums/asmecrce
-https://frcrce.ac.in/index.php/students/forums/code-labs
-https://frcrce.ac.in/index.php/students/forums/mozilla-club
-https://frcrce.ac.in/index.php/students/forums/acmcrce
-https://frcrce.ac.in/index.php/students/forums/wiecrce
-https://frcrce.ac.in/index.php/students/forums/ieee-xcrce
-https://frcrce.ac.in/index.php/students/forums/nsscrce
-https://frcrce.ac.in/index.php/students/forums/gdsc-crce
+# Core consumer finance & regulatory guidance
+https://www.consumerfinance.gov/ask-cfpb/
+https://www.investor.gov/
+https://www.fdic.gov/consumers/
+https://www.federalreserveeducation.org/
 
-#computer dept 
-https://frcrce.ac.in/index.php/crce-department/comp-engg/about-compengg
-https://frcrce.ac.in/index.php/crce-department/comp-engg/from-hod-s-desk
-https://frcrce.ac.in/index.php/crce-department/comp-engg/vision-mission-compengg
-https://frcrce.ac.in/index.php/crce-department/comp-engg/peo-po-compengg
-https://frcrce.ac.in/index.php/crce-department/comp-engg/faculty-compengg
-https://frcrce.ac.in/index.php/crce-department/comp-engg/support-staff-compengg
-https://frcrce.ac.in/index.php/crce-department/comp-engg/comp-engg-infra
-https://frcrce.ac.in/index.php/crce-department/comp-engg/comp-research/comps-publications
-https://frcrce.ac.in/index.php/crce-department/comp-engg/comp-research/comps-projects
-https://frcrce.ac.in/index.php/crce-department/comp-engg/comp-research/grants
-https://fragnel.edu.in/index.php/crce-downloads/category/81-comps
-https://fragnel.edu.in/index.php/crce-department/comp-engg/innovative-teaching-and-learning-practices
-https://fragnel.edu.in/index.php/crce-department/comp-engg/placement-higher-studies-and-internship/placement-data
-https://fragnel.edu.in/index.php/crce-department/comp-engg/placement-higher-studies-and-internship/internship-data
-https://fragnel.edu.in/index.php/crce-department/comp-engg/pre-incubation-center
+# Personal finance guides and explainers
+https://www.investopedia.com/
+https://www.nerdwallet.com/
+https://www.bankrate.com/
+
+# Investing, markets and filings
+https://www.sec.gov/
+https://www.morningstar.com/
+https://www.bloomberg.com/
+
+# Financial industry self-regulatory and investor protection
+https://www.finra.org/
+https://www.consumerfinance.gov/consumer-tools/
+
+# Tax guidance (US)
+https://www.irs.gov/
+
+# News & market data (optional)
+https://finance.yahoo.com/
+https://www.reuters.com/finance/
+
+# Add institution- or region-specific pages below as needed.
+https://economictimes.indiatimes.com
+https://www.livemint.com)
+https://www.moneycontrol.com
+https://blog.bankbazaar.com
+https://www.cleartax.in
+https://zerodha.com/varsity/modules 
+https://investor.sebi.gov.in
+https://www.policybazaar.com
+https://www.scripbox.com
+https://www.etmoney.com

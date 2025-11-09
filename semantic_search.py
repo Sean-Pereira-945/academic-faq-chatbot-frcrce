@@ -1,4 +1,4 @@
-"""Semantic search utilities for the Academic FAQ chatbot."""
+"""Semantic search utilities for the FinGuide chatbot."""
 
 import os
 import pickle

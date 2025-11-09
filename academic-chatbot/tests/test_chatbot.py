@@ -2,8 +2,36 @@
 
 from __future__ import annotations
 
+import sys
+import types
 import unittest
 from unittest import mock
+
+sys.modules.setdefault("faiss", mock.MagicMock())
+
+if "huggingface_hub" not in sys.modules:
+    huggingface_stub = types.ModuleType("huggingface_hub")
+
+    def _hf_hub_download(*args, **kwargs):  # pragma: no cover - test stub
+        return "mock-path"
+
+    huggingface_stub.hf_hub_download = _hf_hub_download  # type: ignore[attr-defined]
+    huggingface_stub.cached_download = _hf_hub_download  # type: ignore[attr-defined]
+    sys.modules["huggingface_hub"] = huggingface_stub
+
+if "sentence_transformers" not in sys.modules:
+    sentence_stub = types.ModuleType("sentence_transformers")
+    sentence_stub.CrossEncoder = None  # type: ignore[attr-defined]
+    sys.modules["sentence_transformers"] = sentence_stub
+
+google_stub = sys.modules.setdefault("google", types.ModuleType("google"))
+generativeai_stub = sys.modules.setdefault("google.generativeai", mock.MagicMock())
+api_core_stub = sys.modules.setdefault("google.api_core", types.ModuleType("google.api_core"))
+exceptions_stub = sys.modules.setdefault("google.api_core.exceptions", types.ModuleType("google.api_core.exceptions"))
+exceptions_stub.NotFound = Exception  # type: ignore[attr-defined]
+api_core_stub.exceptions = exceptions_stub  # type: ignore[attr-defined]
+google_stub.generativeai = generativeai_stub  # type: ignore[attr-defined]
+google_stub.api_core = api_core_stub  # type: ignore[attr-defined]
 
 from chatbot import AcademicFAQChatbot
 
@@ -185,7 +213,7 @@ class AcademicFAQChatbotTests(unittest.TestCase):
 
     @mock.patch("chatbot.GeminiRephraser")
     @mock.patch("chatbot.SemanticSearchEngine")
-    def test_gemini_failure_falls_back_to_manual_summary(self, mock_engine, mock_rephraser):
+    def test_direct_gemini_used_when_rephrase_fails(self, mock_engine, mock_rephraser):
         engine_instance = mock_engine.return_value
         engine_instance.load_index.return_value = True
         engine_instance.search.return_value = [
@@ -211,13 +239,45 @@ class AcademicFAQChatbotTests(unittest.TestCase):
         rephraser_instance.is_available.return_value = True
         rephraser_instance.compose_answer.return_value = None
         rephraser_instance.rephrase.return_value = None
+        rephraser_instance.answer_without_context.return_value = "Please visit the library help desk for up-to-date hours."
 
         bot = AcademicFAQChatbot()
         response = bot.generate_response("What are the library hours?")
 
-        self.assertIn("Here's what the handbook clarifies about \"What are the library hours\":", response)
-        self.assertIn("- Concerning library hours, the library is open from 8 AM to 10 PM on weekdays.", response)
-        self.assertIn("Sources: Library Guide", response)
+        self.assertEqual(
+            "Please visit the library help desk for up-to-date hours.",
+            response,
+        )
+        rephraser_instance.answer_without_context.assert_called_once()
+
+    @mock.patch("chatbot.GeminiRephraser")
+    @mock.patch("chatbot.SemanticSearchEngine")
+    def test_no_results_escalates_to_gemini_direct_answer(self, mock_engine, mock_rephraser):
+        engine_instance = mock_engine.return_value
+        engine_instance.load_index.return_value = True
+        engine_instance.search.return_value = []
+        engine_instance.keyword_search.return_value = []
+        engine_instance.extract_relevant_sentences.return_value = []
+
+        rephraser_instance = mock_rephraser.return_value
+        rephraser_instance.is_available.return_value = True
+        rephraser_instance.expand_query.return_value = None
+        rephraser_instance.compose_answer.return_value = None
+        rephraser_instance.rephrase.return_value = None
+        rephraser_instance.answer_without_context.return_value = "Please connect with financial aid for housing scholarship details."
+
+        bot = AcademicFAQChatbot()
+        response = bot.generate_response("What scholarships cover housing?")
+
+        self.assertEqual(
+            "Please connect with financial aid for housing scholarship details.",
+            response,
+        )
+
+        rephraser_instance.answer_without_context.assert_called_once()
+        args, kwargs = rephraser_instance.answer_without_context.call_args
+        self.assertEqual(args[0], "What scholarships cover housing?")
+        self.assertIsNone(kwargs.get("intent_hint"))
 
     @mock.patch("chatbot.GeminiRephraser")
     @mock.patch("chatbot.SemanticSearchEngine")
