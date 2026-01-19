@@ -1,29 +1,26 @@
-# FinGuide Chatbot 💰
+# Intelligent Document-Based FAQ Chatbot 🤖
 
-An AI-powered personal finance assistant that delivers fast, trustworthy guidance on budgeting, investing, credit, insurance, and taxes. The project pairs a modern Flask web experience with Google Gemini embeddings, FAISS semantic search, and a curated corpus of financial resources.
+A generalized, NLP-powered Question & Answer system that retrieves accurate information from unstructured documents. This application allows users to upload PDF or text documents and ask questions in natural language, receiving context-aware answers instantly.
 
-| Phase | Description | Status |
-| --- | --- | --- |
-| Phase 1 | Environment setup, dependency pinning, project scaffolding | ✅ Completed |
-| Phase 2 | Data ingestion, chunking, embedding, FAISS indexing | ✅ Completed |
-| Phase 3 | Chatbot core logic, Flask UI | ✅ Completed |
-| Phase 4 | Automated/manual evaluation suite, smoke + unit tests | ✅ Completed |
-| Phase 5 | Documentation, polish, and release prep | ✅ Completed |
+## 🚀 Overview
 
----
+This project solves the problem of manual information retrieval by automating the Q&A process. Instead of searching through Ctrl+F, users can query the system (e.g., *"What is the refund policy?"* or *"How do I reset my configuration?"*), and the bot utilizes semantic search to find the most relevant section of the provided documentation.
 
-## 🔍 Key Features
+## ✨ Key Features
 
-- **Curated finance corpus** — ingest PDFs and live articles to build a trusted library of financial explainers, regulatory notices, and calculators.
-- **Gemini-powered retrieval** — Google Gemini embeddings (via `text-embedding-004`) fuel fast, high-quality semantic matches; FAISS handles vector search.
-- **Transparent answers** — Returns concise advice with inline source highlights so users can verify every recommendation.
-- **Flexible fallbacks** — When documents lack coverage, the assistant escalates to Gemini for a best-effort answer that still discloses uncertainty and next steps.
-- **Financial synonym expansion** — Budgeting, investing, credit, and tax terminology is expanded automatically to boost recall.
-- **Conversational UX** — Dark-themed Flask interface with welcome flows, suggestion chips, chat history, and export tools.
-- **Evaluation toolkit** — Scripts for latency checks, regression tests, and dataset-driven accuracy scoring.
-- **Test coverage** — Unit tests mock external services to keep the feedback loop fast.
+* **Document Ingestion:** Support for parsing and extracting text from PDFs and text files.
+* **Semantic Search:** Uses **Sentence Transformers** to understand the *meaning* behind queries, not just keyword matching.
+* **Vector Database:** Implements **FAISS (Facebook AI Similarity Search)** for high-speed similarity search on large datasets.
+* **Interactive UI:** Built with **Streamlit** for a clean, user-friendly chat interface.
+* **Contextual Answers:** Returns the specific passage or "chunk" of the document that contains the answer.
 
----
+## 🛠️ Tech Stack
+
+* **Language:** Python 3.9+
+* **Interface:** Streamlit
+* **NLP/Embeddings:** HuggingFace `sentence-transformers` (e.g., `all-MiniLM-L6-v2`)
+* **Vector Store:** FAISS (CPU)
+* **Data Processing:** PyPDF2 (or LangChain document loaders)
 
 ## ⚙️ Quickstart
 
@@ -48,7 +45,7 @@ python test_setup.py
 ```
 This script checks GPU/CPU availability, validates the Hugging Face compatibility shim, and confirms that required directories exist.
 
-### 3. Ingest your financial sources
+### 3. Ingest your sources
 - Place financial PDFs under `data/pdfs/` (any depth; the loader walks subdirectories).
 - Add seed URLs to `data/urls.txt` (one per line). The builder auto-creates the file with finance-focused guidance if missing.
 
@@ -78,7 +75,6 @@ Visit http://localhost:5000 for the landing page or http://localhost:5000/chat t
 The application features a premium dark-themed interface with two main pages, served via Flask templates and vanilla JavaScript—no Streamlit runtime required:
 
 ### Landing Page (/)
-- Animated hero section that highlights savings goals, portfolios, and tax reminders
 - Floating information cards with smooth animations
 - Feature showcase grid
 - Technology stack overview
